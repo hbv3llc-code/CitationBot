@@ -91,7 +91,7 @@ export default async function DashboardPage() {
         </div>
         {recentRuns && recentRuns.length > 0 ? (
           <div className="divide-y divide-gray-100">
-            {recentRuns.map((run: { id: string; businesses?: { name: string } | null; total_sites: number; created_at: string; successful_sites: number; failed_sites: number; status: string }) => (
+            {recentRuns.map((run: { id: string; businesses?: { name: string }[] | null; total_sites: number; created_at: string; successful_sites: number; failed_sites: number; status: string }) => (
               <Link
                 key={run.id}
                 href={`/runs/${run.id}`}
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
               >
                 <div>
                   <p className="text-sm font-medium text-gray-900">
-                    {run.businesses?.name ?? "Unknown business"}
+                    {run.businesses?.[0]?.name ?? "Unknown business"}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     {run.total_sites} sites &middot; {new Date(run.created_at).toLocaleDateString()}
