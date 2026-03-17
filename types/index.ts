@@ -24,6 +24,10 @@ export interface Business {
   logo_url: string | null;
   google_sheet_id: string | null;
   google_sheet_url: string | null;
+  // Gmail OAuth tokens (encrypted at rest, never exposed to client)
+  gmail_access_token: string | null;
+  gmail_refresh_token: string | null;
+  gmail_token_expiry: string | null;
   gmail_connected_at: string | null;
   created_at: string;
   updated_at: string;

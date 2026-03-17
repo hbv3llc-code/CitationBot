@@ -115,6 +115,10 @@ export default async function MonitoringPage() {
                     {account.next_monitor_at ? formatDate(account.next_monitor_at) : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
+                    <Link href={`/monitoring/${account.id}`}
+                      className="text-xs text-primary hover:underline mr-3">
+                      History
+                    </Link>
                     {account.profile_url && (
                       <a href={account.profile_url} target="_blank" rel="noopener"
                         className="text-xs text-primary hover:underline flex items-center gap-1 justify-end">

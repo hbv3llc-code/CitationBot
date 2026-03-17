@@ -405,8 +405,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Entry point
-if (require.main === module) {
+// Entry point — ESM-compatible main detection
+const isMain = process.argv[1] &&
+  (import.meta.url === `file://${process.argv[1]}` ||
+   import.meta.url === `file://${process.argv[1]}.js`);
+
+if (isMain) {
   run().catch(console.error);
 }
 

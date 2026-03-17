@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Globe, Building2, ExternalLink, Plus, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Mail, Globe, Building2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { GenerateDescriptionsButton } from "@/components/businesses/GenerateDescriptionsButton";
 import { ConnectGmailButton } from "@/components/businesses/ConnectGmailButton";
+import { DescriptionCard } from "@/components/businesses/DescriptionCard";
 import { formatPhone } from "@/lib/utils";
 
 export default async function BusinessDetailPage({ params }: { params: { id: string } }) {
@@ -82,18 +83,13 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
 
             {descriptions && descriptions.length > 0 ? (
               <div className="space-y-3">
-                {descriptions.map((desc) => (
-                  <div key={desc.id}
-                    className={`p-3 rounded-lg border text-sm ${desc.approved ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50"}`}>
-                    <div className="flex items-start gap-2">
-                      {desc.approved ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0 mt-0.5" />
-                      )}
-                      <p className="text-gray-700 leading-relaxed">{desc.content}</p>
-                    </div>
+                {approvedDescriptions.length === 0 && (
+                  <div className="rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-xs text-yellow-700">
+                    Click the circle on a description to approve it. Approved descriptions are used in citation signups.
                   </div>
+                )}
+                {descriptions.map((desc) => (
+                  <DescriptionCard key={desc.id} description={desc} />
                 ))}
               </div>
             ) : (

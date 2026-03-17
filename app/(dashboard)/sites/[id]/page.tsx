@@ -62,6 +62,10 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
           </a>
         </div>
         <div className="flex gap-2">
+          <Link href={`/sites/${site.id}/edit`}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            Edit
+          </Link>
           <BlockSiteButton siteId={site.id} isBlocked={site.is_blocked} siteName={site.name} />
           {!site.is_blocked && (
             <Link href={`/sites/${site.id}/teach`}
