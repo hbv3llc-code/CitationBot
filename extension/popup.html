@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CitationBot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 280px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: #111827;
+      background: #fff;
+    }
+    .header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo {
+      font-size: 18px;
+    }
+    .title {
+      font-weight: 700;
+      color: #0284c7;
+      font-size: 15px;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    .body {
+      padding: 14px 16px;
+    }
+    .status-card {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .status-card.active {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+    }
+    .status-card.inactive {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+    .status-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .status-label.active { color: #0284c7; }
+    .status-label.inactive { color: #6b7280; }
+    .status-text {
+      color: #374151;
+      line-height: 1.4;
+    }
+    .mappings {
+      margin-top: 10px;
+    }
+    .mapping-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      font-size: 12px;
+    }
+    .mapping-check { color: #16a34a; font-weight: bold; }
+    .mapping-label { color: #374151; font-weight: 500; }
+    .btn {
+      display: inline-block;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      text-align: center;
+    }
+    .btn-primary {
+      background: #0ea5e9;
+      color: white;
+      width: 100%;
+    }
+    .btn-danger {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .footer {
+      padding: 10px 16px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+    }
+    .footer a {
+      color: #0284c7;
+      text-decoration: none;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">🤖</span>
+    <div>
+      <div class="title">CitationBot</div>
+      <div class="subtitle">Teaching Mode Extension</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div id="status-card" class="status-card inactive">
+      <div id="status-label" class="status-label inactive">Status</div>
+      <div id="status-text" class="status-text">Loading...</div>
+      <div id="mappings-list" class="mappings" style="display: none;"></div>
+    </div>
+
+    <div id="actions"></div>
+  </div>
+
+  <div class="footer">
+    <a href="#" id="open-dashboard">Open CitationBot Dashboard</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
