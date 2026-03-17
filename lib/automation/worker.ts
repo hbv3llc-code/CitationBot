@@ -12,8 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 import { runSignup, checkProfileHealth } from "./engine";
 import { waitForVerificationEmail } from "./email-verifier";
 import { decrypt, generatePassword, encrypt } from "@/lib/crypto";
-import { extractDomain } from "@/lib/utils";
-import type { Business, SiteAdapter, BusinessFields, Proxy } from "@/types";
+import type { Business, BusinessFields, Proxy } from "@/types";
 
 // Use service role for the worker (bypasses RLS)
 const supabase = createClient(

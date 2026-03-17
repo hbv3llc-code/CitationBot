@@ -1,4 +1,4 @@
-import { chromium, type Browser, type Page, type BrowserContext } from "playwright";
+import { chromium, type Browser, type Page } from "playwright";
 import type { AdapterInstructions, AdapterStep, BusinessFields, Proxy } from "@/types";
 
 export interface AutomationOptions {

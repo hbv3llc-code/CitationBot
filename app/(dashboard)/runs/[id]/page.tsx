@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, XCircle } from "lucide-react";
 import { formatDateTime, getStatusColor } from "@/lib/utils";
 import { LiveRunProgress } from "@/components/runs/LiveRunProgress";
+import type { BulkRun, BulkRunResult } from "@/types";
 
 export default async function RunDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -33,7 +34,7 @@ export default async function RunDetailPage({ params }: { params: { id: string }
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">
-            {(run as any).businesses?.name ?? "Unknown"} — Bulk Run
+            {(run as BulkRun & { businesses?: { name: string } | null }).businesses?.name ?? "Unknown"} — Bulk Run
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">
             {run.started_at
@@ -60,7 +61,10 @@ export default async function RunDetailPage({ params }: { params: { id: string }
         </div>
       </div>
 
-      <LiveRunProgress initialRun={run as any} initialResults={results as any ?? []} />
+      <LiveRunProgress
+        initialRun={run as BulkRun & { businesses?: { name: string } }}
+        initialResults={(results ?? []) as (BulkRunResult & { citation_accounts?: { profile_url: string | null } })[]}
+      />
     </div>
   );
 }

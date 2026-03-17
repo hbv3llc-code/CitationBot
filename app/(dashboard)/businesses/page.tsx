@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { Building2, Plus, Mail, Globe, ExternalLink } from "lucide-react";
+import Image from "next/image";
+import { Building2, Plus, Mail, Globe } from "lucide-react";
 import type { Business } from "@/types";
 
 export default async function BusinessesPage() {
@@ -37,10 +38,12 @@ export default async function BusinessesPage() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   {business.logo_url ? (
-                    <img
+                    <Image
                       src={business.logo_url}
                       alt={business.name}
-                      className="w-10 h-10 rounded-lg object-cover"
+                      width={40}
+                      height={40}
+                      className="rounded-lg object-cover"
                     />
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">

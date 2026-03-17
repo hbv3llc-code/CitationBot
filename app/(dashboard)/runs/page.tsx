@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Play, Plus } from "lucide-react";
 import { getStatusColor, formatDateTime } from "@/lib/utils";
-import type { BulkRun } from "@/types";
 
 export default async function RunsPage() {
   const supabase = await createClient();
@@ -41,7 +40,7 @@ export default async function RunsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {runs.map((run: any) => {
+              {runs.map((run: { id: string; businesses?: { name: string } | null; status: string; total_sites: number; completed_sites: number; successful_sites: number; failed_sites: number; started_at: string | null; created_at: string }) => {
                 const pct = run.total_sites > 0
                   ? Math.round((run.completed_sites / run.total_sites) * 100)
                   : 0;

@@ -20,7 +20,6 @@ export default async function SitesPage() {
     .order("name");
 
   const activeSites = sites?.filter((s: Site) => !s.is_blocked) ?? [];
-  const blockedSites = sites?.filter((s: Site) => s.is_blocked) ?? [];
   const adapterActive = activeSites.filter((s: Site) => s.adapter_status === "active").length;
   const adapterBroken = activeSites.filter((s: Site) => s.adapter_status === "broken").length;
 

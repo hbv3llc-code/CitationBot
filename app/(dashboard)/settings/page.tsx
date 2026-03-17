@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
-import { Settings, Shield, Globe } from "lucide-react";
+import { Shield, Globe } from "lucide-react";
 import { ProxySettingsForm } from "@/components/settings/ProxySettingsForm";
 
 export default async function SettingsPage() {

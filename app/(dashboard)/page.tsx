@@ -4,7 +4,6 @@ import { Building2, Globe, Play, AlertCircle, CheckCircle2 } from "lucide-react"
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
   const [
     { count: businessCount },
@@ -92,7 +91,7 @@ export default async function DashboardPage() {
         </div>
         {recentRuns && recentRuns.length > 0 ? (
           <div className="divide-y divide-gray-100">
-            {recentRuns.map((run: any) => (
+            {recentRuns.map((run: { id: string; businesses?: { name: string } | null; total_sites: number; created_at: string; successful_sites: number; failed_sites: number; status: string }) => (
               <Link
                 key={run.id}
                 href={`/runs/${run.id}`}

@@ -5,7 +5,7 @@ import {
   ArrowLeft, Globe, CheckCircle2, AlertCircle, Wrench,
   ExternalLink, Play, Ban, ChevronRight
 } from "lucide-react";
-import { formatDate, formatDateTime, getStatusColor } from "@/lib/utils";
+import { formatDate, getStatusColor } from "@/lib/utils";
 import { BlockSiteButton } from "@/components/sites/BlockSiteButton";
 import { RepairAdapterButton } from "@/components/sites/RepairAdapterButton";
 
@@ -28,8 +28,6 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
   ]);
 
   if (!site) notFound();
-
-  const activeAdapter = adapters?.find((a) => a.is_active);
 
   const statusConfig = {
     active: { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 border-green-200" },
@@ -160,7 +158,7 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
             </div>
             {accounts && accounts.length > 0 ? (
               <div className="divide-y divide-gray-100">
-                {accounts.map((account: any) => (
+                {accounts.map((account: { id: string; businesses?: { name: string } | null; email_used: string; profile_url: string | null; account_status: string }) => (
                   <div key={account.id} className="flex items-center justify-between px-5 py-3">
                     <div>
                       <p className="text-sm font-medium text-gray-900">

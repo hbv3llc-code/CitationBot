@@ -27,6 +27,12 @@ export default async function AccountDetailPage({ params }: { params: { id: stri
 
   if (!account) notFound();
 
+  type AccountWithJoins = typeof account & {
+    businesses?: { name: string; email: string } | null;
+    sites?: { name: string; base_domain: string; signup_url: string } | null;
+  };
+  const typedAccount = account as AccountWithJoins;
+
   const latestCheck = checks?.[0];
   const okCount = checks?.filter((c) => c.status === "ok").length ?? 0;
   const alertCount = checks?.filter((c) => c.status !== "ok").length ?? 0;
@@ -39,7 +45,7 @@ export default async function AccountDetailPage({ params }: { params: { id: stri
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">
-            {(account as any).businesses?.name} — {(account as any).sites?.name}
+            {typedAccount.businesses?.name} — {typedAccount.sites?.name}
           </h1>
           <p className="text-gray-500 text-sm mt-0.5">Citation account monitoring history</p>
         </div>
@@ -167,8 +173,8 @@ export default async function AccountDetailPage({ params }: { params: { id: stri
           {/* Site info */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900 mb-3">Site</h2>
-            <p className="text-sm font-medium text-gray-900">{(account as any).sites?.name}</p>
-            <p className="text-xs text-gray-400">{(account as any).sites?.base_domain}</p>
+            <p className="text-sm font-medium text-gray-900">{typedAccount.sites?.name}</p>
+            <p className="text-xs text-gray-400">{typedAccount.sites?.base_domain}</p>
             <Link href={`/sites/${account.site_id}`}
               className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline">
               View site details →

@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ run_id: run.id }, { status: 201 });
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 

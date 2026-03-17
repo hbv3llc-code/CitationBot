@@ -40,8 +40,8 @@ export function LiveRunProgress({ initialRun, initialResults }: Props) {
         .eq("bulk_run_id", run.id)
         .order("created_at"),
     ]);
-    if (updatedRun) setRun(updatedRun as any);
-    if (updatedResults) setResults(updatedResults as any);
+    if (updatedRun) setRun(updatedRun as typeof initialRun);
+    if (updatedResults) setResults(updatedResults as typeof initialResults);
   }, [run.id, supabase]);
 
   useEffect(() => {

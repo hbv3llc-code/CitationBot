@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Globe, Building2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { GenerateDescriptionsButton } from "@/components/businesses/GenerateDescriptionsButton";
 import { ConnectGmailButton } from "@/components/businesses/ConnectGmailButton";
 import { DescriptionCard } from "@/components/businesses/DescriptionCard";
@@ -106,7 +106,7 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
             </div>
             {accounts && accounts.length > 0 ? (
               <div className="space-y-2">
-                {accounts.map((account: any) => (
+                {accounts.map((account: { id: string; sites?: { name: string } | null; profile_url: string | null; account_status: string }) => (
                   <div key={account.id} className="flex items-center justify-between text-sm py-1.5">
                     <span className="text-gray-900">{account.sites?.name ?? "Unknown site"}</span>
                     <div className="flex items-center gap-3">

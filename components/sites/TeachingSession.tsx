@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Monitor, CheckCircle2, AlertCircle, ChevronRight, Loader2, ExternalLink } from "lucide-react";
+import { CheckCircle2, AlertCircle, ChevronRight, Loader2, ExternalLink } from "lucide-react";
 import type { Site, Business } from "@/types";
 
 type Step = "select_business" | "install_extension" | "open_site" | "map_fields" | "confirm" | "done";
@@ -48,6 +48,7 @@ export function TeachingSession({
   // Check if extension is installed (set by content script)
   const extensionInstalled =
     typeof window !== "undefined" &&
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__CITATIONBOT_EXTENSION_INSTALLED === true;
 
   function addFieldMapping() {

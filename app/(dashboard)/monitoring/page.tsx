@@ -52,7 +52,7 @@ export default async function MonitoringPage() {
             <h2 className="font-semibold text-red-900">{alerts.length} Alerts Need Attention</h2>
           </div>
           <div className="space-y-2">
-            {alerts.map((check: any) => (
+            {alerts.map((check: { id: string; citation_accounts?: { businesses?: { name: string } | null; sites?: { name: string } | null } | null; details?: string | null; checked_at: string; status: string }) => (
               <div key={check.id} className="flex items-start justify-between bg-white rounded-lg p-3 border border-red-100">
                 <div>
                   <p className="text-sm font-medium text-gray-900">
@@ -90,7 +90,7 @@ export default async function MonitoringPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {accounts.map((account: any) => (
+              {accounts.map((account: { id: string; businesses?: { name: string } | null; sites?: { name: string } | null; account_status: string; last_monitored_at: string | null; next_monitor_at: string | null; profile_url: string | null }) => (
                 <tr key={account.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900">
                     {account.businesses?.name ?? "—"}
