@@ -48,9 +48,8 @@ export async function startExtensionTeachingSession(
 export async function isExtensionInstalled(): Promise<boolean> {
   if (!EXTENSION_ID || typeof chrome === "undefined" || !chrome.runtime) {
     // Fall back to checking the window flag set by the content script
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return typeof window !== "undefined" &&
-      (window as any).__CITATIONBOT_EXTENSION_INSTALLED === true;
+      (window as Window & { __CITATIONBOT_EXTENSION_INSTALLED?: boolean }).__CITATIONBOT_EXTENSION_INSTALLED === true;
   }
 
   return new Promise((resolve) => {
