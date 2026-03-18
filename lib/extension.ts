@@ -23,16 +23,18 @@ export interface TeachingSessionParams {
 export async function startExtensionTeachingSession(
   params: TeachingSessionParams
 ): Promise<boolean> {
-  if (!EXTENSION_ID || typeof chrome === "undefined" || !chrome.runtime) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chromeRuntime = (globalThis as any)?.chrome?.runtime;
+  if (!EXTENSION_ID || !chromeRuntime) {
     return false;
   }
 
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage(
+    chromeRuntime.sendMessage(
       EXTENSION_ID,
       { type: "START_TEACHING_SESSION", ...params },
       (response: { success?: boolean } | undefined) => {
-        if (chrome.runtime.lastError) {
+        if (chromeRuntime.lastError) {
           resolve(false);
         } else {
           resolve(response?.success === true);
@@ -46,18 +48,20 @@ export async function startExtensionTeachingSession(
  * Checks if the CitationBot extension is installed and accessible.
  */
 export async function isExtensionInstalled(): Promise<boolean> {
-  if (!EXTENSION_ID || typeof chrome === "undefined" || !chrome.runtime) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chromeRuntime = (globalThis as any)?.chrome?.runtime;
+  if (!EXTENSION_ID || !chromeRuntime) {
     // Fall back to checking the window flag set by the content script
     return typeof window !== "undefined" &&
       (window as Window & { __CITATIONBOT_EXTENSION_INSTALLED?: boolean }).__CITATIONBOT_EXTENSION_INSTALLED === true;
   }
 
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage(
+    chromeRuntime.sendMessage(
       EXTENSION_ID,
       { type: "GET_SESSION_STATUS" },
       (response: unknown) => {
-        resolve(!chrome.runtime.lastError && response !== undefined);
+        resolve(!chromeRuntime.lastError && response !== undefined);
       }
     );
   });
