@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -12,11 +12,6 @@ const US_STATES = [
   "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
   "VA","WA","WV","WI","WY","DC",
 ];
-
-interface BacklinkEntry {
-  url: string;
-  anchor_text: string;
-}
 
 export default function NewBusinessPage() {
   const router = useRouter();
@@ -26,9 +21,7 @@ export default function NewBusinessPage() {
   const [error, setError] = useState<string | null>(null);
   const [categoryInput, setCategoryInput] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
-  const [backlinks, setBacklinks] = useState<BacklinkEntry[]>([{ url: "", anchor_text: "" }]);
-
-  const [form, setForm] = useState({
+const [form, setForm] = useState({
     name: "",
     owner_name: "",
     address_street: "",
@@ -57,19 +50,7 @@ export default function NewBusinessPage() {
     setCategories((prev: string[]) => prev.filter((c: string) => c !== cat));
   }
 
-  function updateBacklink(index: number, field: keyof BacklinkEntry, value: string) {
-    setBacklinks((prev: BacklinkEntry[]) => prev.map((b: BacklinkEntry, i: number) => (i === index ? { ...b, [field]: value } : b)));
-  }
-
-  function addBacklink() {
-    setBacklinks((prev: BacklinkEntry[]) => [...prev, { url: "", anchor_text: "" }]);
-  }
-
-  function removeBacklink(index: number) {
-    setBacklinks((prev: BacklinkEntry[]) => prev.filter((_: BacklinkEntry, i: number) => i !== index));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
+async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -95,15 +76,7 @@ export default function NewBusinessPage() {
       return;
     }
 
-    // Insert backlinks
-    const validBacklinks = backlinks.filter((b: BacklinkEntry) => b.url && b.anchor_text);
-    if (validBacklinks.length > 0) {
-      await supabase.from("backlink_pool").insert(
-        validBacklinks.map((b: BacklinkEntry) => ({ ...b, business_id: business.id }))
-      );
-    }
-
-    router.push(`/businesses/${business.id}`);
+router.push(`/businesses/${business.id}`);
   }
 
   return (
@@ -225,41 +198,7 @@ export default function NewBusinessPage() {
           )}
         </div>
 
-        {/* Backlinks */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-gray-900">Backlink Pool</h2>
-              <p className="text-xs text-gray-400 mt-0.5">URLs and anchor text used on sites that allow profile links</p>
-            </div>
-            <button type="button" onClick={addBacklink}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors">
-              <Plus className="w-3.5 h-3.5" /> Add Link
-            </button>
-          </div>
-          <div className="space-y-3">
-            {backlinks.map((backlink: BacklinkEntry, i: number) => (
-              <div key={i} className="flex gap-2 items-start">
-                <div className="flex-1 grid grid-cols-2 gap-2">
-                  <input value={backlink.url} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateBacklink(i, "url", e.target.value)}
-                    type="url" placeholder="https://acmeplumbing.com/services"
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                  <input value={backlink.anchor_text} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateBacklink(i, "anchor_text", e.target.value)}
-                    placeholder="Plumber in Springfield"
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                </div>
-                {backlinks.length > 1 && (
-                  <button type="button" onClick={() => removeBacklink(i)}
-                    className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3">
+<div className="flex justify-end gap-3">
           <Link href="/businesses"
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             Cancel
