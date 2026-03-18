@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle, ChevronRight, Loader2, ExternalLink } from "lucide-react";
-import type { Site, Business } from "@/types";
+import type { Site } from "@/types";
 
 type Step = "select_business" | "install_extension" | "open_site" | "map_fields" | "confirm" | "done";
 
@@ -34,7 +34,7 @@ export function TeachingSession({
   businesses,
 }: {
   site: Site;
-  businesses: Business[];
+  businesses: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("select_business");
@@ -48,8 +48,7 @@ export function TeachingSession({
   // Check if extension is installed (set by content script)
   const extensionInstalled =
     typeof window !== "undefined" &&
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).__CITATIONBOT_EXTENSION_INSTALLED === true;
+    (window as Window & { __CITATIONBOT_EXTENSION_INSTALLED?: boolean }).__CITATIONBOT_EXTENSION_INSTALLED === true;
 
   function addFieldMapping() {
     if (!currentField || !selectorInput.trim()) return;
