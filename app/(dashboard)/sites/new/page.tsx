@@ -12,7 +12,6 @@ export default function NewSitePage() {
   const [form, setForm] = useState({
     name: "",
     signup_url: "",
-    allows_backlinks: false,
     requires_email_verification: true,
   });
 
@@ -95,18 +94,6 @@ export default function NewSitePage() {
               </div>
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.allows_backlinks}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((p: typeof form) => ({ ...p, allows_backlinks: e.target.checked }))}
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-700">Allows backlinks</p>
-                <p className="text-xs text-gray-400">Profile includes a field for a website URL with anchor text</p>
-              </div>
-            </label>
           </div>
         </div>
 

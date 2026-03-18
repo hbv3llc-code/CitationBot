@@ -75,7 +75,6 @@ export default async function SitesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400 space-x-2">
-                      {site.allows_backlinks && <span className="text-green-600">Backlinks</span>}
                       {site.requires_email_verification && <span>Email verify</span>}
                     </td>
                     <td className="px-4 py-3">

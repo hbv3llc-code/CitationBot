@@ -59,7 +59,6 @@ export interface Site {
   name: string;
   signup_url: string;
   base_domain: string;
-  allows_backlinks: boolean;
   requires_email_verification: boolean;
   is_blocked: boolean;
   blocked_reason: string | null;

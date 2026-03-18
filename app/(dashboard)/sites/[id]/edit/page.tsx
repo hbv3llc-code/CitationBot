@@ -15,7 +15,6 @@ export default function EditSitePage() {
   const [form, setForm] = useState({
     name: "",
     signup_url: "",
-    allows_backlinks: false,
     requires_email_verification: true,
   });
 
@@ -27,7 +26,6 @@ export default function EditSitePage() {
           setForm({
             name: data.name,
             signup_url: data.signup_url,
-            allows_backlinks: data.allows_backlinks,
             requires_email_verification: data.requires_email_verification,
           });
         }
@@ -131,22 +129,6 @@ export default function EditSitePage() {
               </div>
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.allows_backlinks}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setForm((p: typeof form) => ({ ...p, allows_backlinks: e.target.checked }))
-                }
-                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-700">Allows backlinks</p>
-                <p className="text-xs text-gray-400">
-                  Profile includes a website URL field — CitationBot will fill it from your backlink pool
-                </p>
-              </div>
-            </label>
           </div>
         </div>
 

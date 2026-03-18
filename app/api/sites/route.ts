@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { name, signup_url, allows_backlinks = false, requires_email_verification = true } = body;
+  const { name, signup_url, requires_email_verification = true } = body;
 
   if (!name || !signup_url) {
     return NextResponse.json({ error: "name and signup_url are required" }, { status: 400 });
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("sites")
-    .insert({ user_id: user.id, name, signup_url, base_domain, allows_backlinks, requires_email_verification })
+    .insert({ user_id: user.id, name, signup_url, base_domain, requires_email_verification })
     .select()
     .single();
 

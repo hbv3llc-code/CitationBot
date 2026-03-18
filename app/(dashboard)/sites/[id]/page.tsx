@@ -199,12 +199,6 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
                 <dd className="text-gray-900">{site.base_domain}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-400">Backlinks</dt>
-                <dd className={site.allows_backlinks ? "text-green-600" : "text-gray-400"}>
-                  {site.allows_backlinks ? "Yes" : "No"}
-                </dd>
-              </div>
-              <div className="flex justify-between">
                 <dt className="text-gray-400">Email verify</dt>
                 <dd className={site.requires_email_verification ? "text-gray-700" : "text-gray-400"}>
                   {site.requires_email_verification ? "Required" : "Not required"}
