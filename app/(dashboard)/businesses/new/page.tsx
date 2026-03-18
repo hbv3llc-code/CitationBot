@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ArrowLeft } from "lucide-react";
+import { GoogleCategoryInput } from "@/components/businesses/GoogleCategoryInput";
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -19,7 +20,6 @@ export default function NewBusinessPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [categoryInput, setCategoryInput] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
 const [form, setForm] = useState({
     name: "",
@@ -38,17 +38,6 @@ const [form, setForm] = useState({
     setForm((prev: typeof form) => ({ ...prev, [field]: value }));
   }
 
-  function addCategory() {
-    const cat = categoryInput.trim();
-    if (cat && !categories.includes(cat)) {
-      setCategories((prev: string[]) => [...prev, cat]);
-      setCategoryInput("");
-    }
-  }
-
-  function removeCategory(cat: string) {
-    setCategories((prev: string[]) => prev.filter((c: string) => c !== cat));
-  }
 
 async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -176,26 +165,7 @@ router.push(`/businesses/${business.id}`);
         {/* Service categories */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Service Categories</h2>
-          <div className="flex gap-2">
-            <input value={categoryInput} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategoryInput(e.target.value)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="e.g. Plumbing, Water Heater Repair" />
-            <button type="button" onClick={addCategory}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
-              Add
-            </button>
-          </div>
-          {categories.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {categories.map((cat: string) => (
-                <span key={cat} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                  {cat}
-                  <button type="button" onClick={() => removeCategory(cat)} className="hover:text-primary/60">×</button>
-                </span>
-              ))}
-            </div>
-          )}
+          <GoogleCategoryInput categories={categories} onChange={setCategories} />
         </div>
 
 <div className="flex justify-end gap-3">
