@@ -21,10 +21,11 @@ export function GoogleCategoryInput({ categories, onChange }: Props) {
       setHighlighted(-1);
       return;
     }
-    const q = query.toLowerCase();
-    const matches = GOOGLE_BUSINESS_CATEGORIES.filter(
-      (c) => c.toLowerCase().includes(q) && !categories.includes(c)
-    ).slice(0, 10);
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const matches = GOOGLE_BUSINESS_CATEGORIES.filter((c) => {
+      const lc = c.toLowerCase();
+      return words.every((w) => lc.includes(w)) && !categories.includes(c);
+    }).slice(0, 10);
     setSuggestions(matches);
     setHighlighted(-1);
   }, [query, categories]);
