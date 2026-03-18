@@ -49,6 +49,16 @@ export interface BacklinkEntry {
   created_at: string;
 }
 
+// ---- Site Lists ----
+
+export interface SiteList {
+  id: string;
+  user_id: string;
+  name: string;
+  sites: Array<{ name: string; signup_url: string }>;
+  created_at: string;
+}
+
 // ---- Sites ----
 
 export type AdapterStatus = 'unknown' | 'learning' | 'active' | 'broken' | 'repairing';
