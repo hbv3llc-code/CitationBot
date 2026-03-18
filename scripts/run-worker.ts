@@ -56,7 +56,7 @@ async function processPendingRuns(): Promise<void> {
     }
 
     await Promise.all(
-      pendingResults.map((r: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string }) => processJob(r, business, descriptions ?? [], backlinks ?? [], proxies ?? []))
+      pendingResults.map((r: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string }, index: number) => processJob(r, index, business, descriptions ?? [], backlinks ?? [], proxies ?? []))
     );
 
     // Check completion

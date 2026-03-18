@@ -8,9 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 import { parseCsvSites } from "@/lib/utils";
 import type { Business } from "@/types";
 
+const supabase = createClient();
+
 export default function NewRunPage() {
   const router = useRouter();
-  const supabase = createClient();
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState("");
@@ -24,7 +25,7 @@ export default function NewRunPage() {
     supabase.from("businesses").select("*").order("name").then(({ data }: { data: Business[] | null }) => {
       if (data) setBusinesses(data);
     });
-  }, []);
+  }, [supabase]);
 
   function handleCsvChange(text: string) {
     setCsvText(text);
