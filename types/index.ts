@@ -193,6 +193,7 @@ export interface Proxy {
   last_used_at: string | null;
   fail_count: number;
   created_at: string;
+  encrypted_password?: string;
 }
 
 // ---- CSV Import ----

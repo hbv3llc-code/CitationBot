@@ -34,7 +34,7 @@ export async function runSignup(
         ? {
             server: `${proxy.host}:${proxy.port}`,
             username: proxy.username ?? undefined,
-            password: (proxy as Proxy & { encrypted_password?: string }).encrypted_password ? "[decrypted-at-call-site]" : undefined,
+            password: proxy.encrypted_password ? "[decrypted-at-call-site]" : undefined,
           }
         : undefined,
     });
