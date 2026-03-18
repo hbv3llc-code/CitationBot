@@ -88,7 +88,7 @@ async function processRun(run: {
         .select("*")
         .eq("business_id", run.business_id)
         .eq("approved", true),
-      supabase.from("backlink_pool").select("*").eq("business_id", run.business_id),
+      supabase.from("backlink_pool").select("*").eq("business_id", run.business_id).order("created_at", { ascending: true }),
       supabase
         .from("proxy_pool")
         .select("*")
@@ -122,8 +122,8 @@ async function processRun(run: {
 
   // Process up to concurrency jobs in parallel
   await Promise.all(
-    pendingResults.map((result: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string }) =>
-      processJob(result, business, descriptions ?? [], backlinks ?? [], proxies ?? [])
+    pendingResults.map((result: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string }, index: number) =>
+      processJob(result, index, business, descriptions ?? [], backlinks ?? [], proxies ?? [])
     )
   );
 
@@ -132,6 +132,7 @@ async function processRun(run: {
 
 async function processJob(
   result: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string },
+  jobIndex: number,
   business: Business,
   descriptions: Array<{ id: string; content: string }>,
   backlinks: Array<{ url: string; anchor_text: string }>,
@@ -198,8 +199,8 @@ async function processJob(
     // Pick a description (round-robin through approved ones, fallback to empty)
     const description = descriptions[Math.floor(Math.random() * Math.max(descriptions.length, 1))];
 
-    // Pick a backlink (round-robin)
-    const backlink = backlinks[Math.floor(Math.random() * Math.max(backlinks.length, 1))];
+    // Pick a backlink (in order, cycling through the pool)
+    const backlink = backlinks.length > 0 ? backlinks[jobIndex % backlinks.length] : undefined;
 
     // Generate unique password
     const password = generatePassword(20);
