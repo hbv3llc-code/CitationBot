@@ -79,22 +79,22 @@ export function ProxySettingsForm({ proxies }: { proxies: Partial<Proxy>[] }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Host *</label>
-              <input required value={form.host} onChange={(e) => setForm((p) => ({ ...p, host: e.target.value }))}
+              <input required value={form.host} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((p: typeof form) => ({ ...p, host: e.target.value }))}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="proxy.example.com" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Port *</label>
-              <input required type="number" value={form.port} onChange={(e) => setForm((p) => ({ ...p, port: e.target.value }))}
+              <input required type="number" value={form.port} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((p: typeof form) => ({ ...p, port: e.target.value }))}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="8080" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Username</label>
-              <input value={form.username} onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
+              <input value={form.username} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((p: typeof form) => ({ ...p, username: e.target.value }))}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="Optional" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
-              <select value={form.proxy_type} onChange={(e) => setForm((p) => ({ ...p, proxy_type: e.target.value as typeof form.proxy_type }))}
+              <select value={form.proxy_type} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setForm((p: typeof form) => ({ ...p, proxy_type: e.target.value as typeof form.proxy_type }))}
                 className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm">
                 <option value="residential">Residential</option>
                 <option value="datacenter">Datacenter</option>

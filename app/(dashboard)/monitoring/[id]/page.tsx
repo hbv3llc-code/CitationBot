@@ -34,8 +34,8 @@ export default async function AccountDetailPage({ params }: { params: { id: stri
   const typedAccount = account as AccountWithJoins;
 
   const latestCheck = checks?.[0];
-  const okCount = checks?.filter((c) => c.status === "ok").length ?? 0;
-  const alertCount = checks?.filter((c) => c.status !== "ok").length ?? 0;
+  const okCount = checks?.filter((c: { status: string }) => c.status === "ok").length ?? 0;
+  const alertCount = checks?.filter((c: { status: string }) => c.status !== "ok").length ?? 0;
 
   return (
     <div className="p-8 max-w-4xl">
@@ -90,7 +90,7 @@ export default async function AccountDetailPage({ params }: { params: { id: stri
             </div>
             {checks && checks.length > 0 ? (
               <div className="divide-y divide-gray-100">
-                {checks.map((check) => (
+                {checks.map((check: { id: string; status: string; checked_at: string; details: string | null }) => (
                   <div key={check.id} className="flex items-start gap-3 px-5 py-3">
                     <div className="mt-0.5 flex-shrink-0">
                       {check.status === "ok" ? (

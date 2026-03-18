@@ -53,8 +53,8 @@ export function LiveRunProgress({ initialRun, initialResults }: Props) {
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "bulk_runs", filter: `id=eq.${run.id}` },
-        (payload) => {
-          setRun((prev) => ({ ...prev, ...(payload.new as Partial<BulkRun>) }));
+        (payload: { new: Record<string, unknown> }) => {
+          setRun((prev: typeof initialRun) => ({ ...prev, ...(payload.new as Partial<BulkRun>) }));
         }
       )
       .on(
@@ -73,7 +73,7 @@ export function LiveRunProgress({ initialRun, initialResults }: Props) {
   }, [run.id, isLive, supabase, refetch]);
 
   const pct = run.total_sites > 0 ? Math.round((run.completed_sites / run.total_sites) * 100) : 0;
-  const failures = results.filter((r) => r.status === "failed");
+  const failures = results.filter((r: typeof initialResults[number]) => r.status === "failed");
 
   return (
     <div className="space-y-6">
@@ -137,7 +137,7 @@ export function LiveRunProgress({ initialRun, initialResults }: Props) {
             business you add. Start with high-value directories first.
           </p>
           <div className="space-y-1.5">
-            {failures.map((result) => (
+            {failures.map((result: typeof initialResults[number]) => (
               <div key={result.id} className="flex items-center justify-between bg-white rounded-lg p-2.5 border border-yellow-100">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{result.site_name}</p>
@@ -171,7 +171,7 @@ export function LiveRunProgress({ initialRun, initialResults }: Props) {
           )}
         </div>
         <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
-          {results.map((result) => (
+          {results.map((result: typeof initialResults[number]) => (
             <div key={result.id} className="flex items-center gap-3 px-4 py-2.5">
               <ResultIcon status={result.status} />
               <div className="flex-1 min-w-0">

@@ -42,31 +42,31 @@ export default function NewBusinessPage() {
   });
 
   function update(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev: typeof form) => ({ ...prev, [field]: value }));
   }
 
   function addCategory() {
     const cat = categoryInput.trim();
     if (cat && !categories.includes(cat)) {
-      setCategories((prev) => [...prev, cat]);
+      setCategories((prev: string[]) => [...prev, cat]);
       setCategoryInput("");
     }
   }
 
   function removeCategory(cat: string) {
-    setCategories((prev) => prev.filter((c) => c !== cat));
+    setCategories((prev: string[]) => prev.filter((c: string) => c !== cat));
   }
 
   function updateBacklink(index: number, field: keyof BacklinkEntry, value: string) {
-    setBacklinks((prev) => prev.map((b, i) => (i === index ? { ...b, [field]: value } : b)));
+    setBacklinks((prev: BacklinkEntry[]) => prev.map((b: BacklinkEntry, i: number) => (i === index ? { ...b, [field]: value } : b)));
   }
 
   function addBacklink() {
-    setBacklinks((prev) => [...prev, { url: "", anchor_text: "" }]);
+    setBacklinks((prev: BacklinkEntry[]) => [...prev, { url: "", anchor_text: "" }]);
   }
 
   function removeBacklink(index: number) {
-    setBacklinks((prev) => prev.filter((_, i) => i !== index));
+    setBacklinks((prev: BacklinkEntry[]) => prev.filter((_: BacklinkEntry, i: number) => i !== index));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -96,10 +96,10 @@ export default function NewBusinessPage() {
     }
 
     // Insert backlinks
-    const validBacklinks = backlinks.filter((b) => b.url && b.anchor_text);
+    const validBacklinks = backlinks.filter((b: BacklinkEntry) => b.url && b.anchor_text);
     if (validBacklinks.length > 0) {
       await supabase.from("backlink_pool").insert(
-        validBacklinks.map((b) => ({ ...b, business_id: business.id }))
+        validBacklinks.map((b: BacklinkEntry) => ({ ...b, business_id: business.id }))
       );
     }
 
@@ -129,38 +129,38 @@ export default function NewBusinessPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-              <input required value={form.name} onChange={(e) => update("name", e.target.value)}
+              <input required value={form.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("name", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="Acme Plumbing Co." />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name *</label>
-              <input required value={form.owner_name} onChange={(e) => update("owner_name", e.target.value)}
+              <input required value={form.owner_name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("owner_name", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="John Smith" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-              <input required value={form.phone} onChange={(e) => update("phone", e.target.value)}
+              <input required value={form.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("phone", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="(555) 123-4567" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-              <input required type="email" value={form.email} onChange={(e) => update("email", e.target.value)}
+              <input required type="email" value={form.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("email", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="info@acmeplumbing.com" />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Website *</label>
-              <input required type="url" value={form.website} onChange={(e) => update("website", e.target.value)}
+              <input required type="url" value={form.website} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("website", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="https://acmeplumbing.com" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Founding Year</label>
               <input type="number" min="1900" max={new Date().getFullYear()} value={form.founding_year}
-                onChange={(e) => update("founding_year", e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("founding_year", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="2005" />
             </div>
@@ -173,19 +173,19 @@ export default function NewBusinessPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
-              <input required value={form.address_street} onChange={(e) => update("address_street", e.target.value)}
+              <input required value={form.address_street} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("address_street", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="123 Main St" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-              <input required value={form.address_city} onChange={(e) => update("address_city", e.target.value)}
+              <input required value={form.address_city} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("address_city", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="Springfield" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
-              <select required value={form.address_state} onChange={(e) => update("address_state", e.target.value)}
+              <select required value={form.address_state} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => update("address_state", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
                 <option value="">Select state</option>
                 {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -193,7 +193,7 @@ export default function NewBusinessPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
-              <input required value={form.address_zip} onChange={(e) => update("address_zip", e.target.value)}
+              <input required value={form.address_zip} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("address_zip", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="62701" />
             </div>
@@ -204,8 +204,8 @@ export default function NewBusinessPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Service Categories</h2>
           <div className="flex gap-2">
-            <input value={categoryInput} onChange={(e) => setCategoryInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }}
+            <input value={categoryInput} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategoryInput(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               placeholder="e.g. Plumbing, Water Heater Repair" />
             <button type="button" onClick={addCategory}
@@ -215,7 +215,7 @@ export default function NewBusinessPage() {
           </div>
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {categories.map((cat) => (
+              {categories.map((cat: string) => (
                 <span key={cat} className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-sm">
                   {cat}
                   <button type="button" onClick={() => removeCategory(cat)} className="hover:text-primary/60">×</button>
@@ -238,13 +238,13 @@ export default function NewBusinessPage() {
             </button>
           </div>
           <div className="space-y-3">
-            {backlinks.map((backlink, i) => (
+            {backlinks.map((backlink: BacklinkEntry, i: number) => (
               <div key={i} className="flex gap-2 items-start">
                 <div className="flex-1 grid grid-cols-2 gap-2">
-                  <input value={backlink.url} onChange={(e) => updateBacklink(i, "url", e.target.value)}
+                  <input value={backlink.url} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateBacklink(i, "url", e.target.value)}
                     type="url" placeholder="https://acmeplumbing.com/services"
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                  <input value={backlink.anchor_text} onChange={(e) => updateBacklink(i, "anchor_text", e.target.value)}
+                  <input value={backlink.anchor_text} onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateBacklink(i, "anchor_text", e.target.value)}
                     placeholder="Plumber in Springfield"
                     className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
                 </div>

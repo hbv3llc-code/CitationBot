@@ -6,6 +6,7 @@ import { GenerateDescriptionsButton } from "@/components/businesses/GenerateDesc
 import { ConnectGmailButton } from "@/components/businesses/ConnectGmailButton";
 import { DescriptionCard } from "@/components/businesses/DescriptionCard";
 import { formatPhone } from "@/lib/utils";
+import type { BusinessDescription, BacklinkEntry } from "@/types";
 
 export default async function BusinessDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -25,7 +26,7 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
 
   if (!business) notFound();
 
-  const approvedDescriptions = descriptions?.filter((d) => d.approved) ?? [];
+  const approvedDescriptions = (descriptions as BusinessDescription[] | null)?.filter((d: BusinessDescription) => d.approved) ?? [];
 
   return (
     <div className="p-8 max-w-4xl">
@@ -88,7 +89,7 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
                     Click the circle on a description to approve it. Approved descriptions are used in citation signups.
                   </div>
                 )}
-                {descriptions.map((desc) => (
+                {(descriptions as BusinessDescription[]).map((desc: BusinessDescription) => (
                   <DescriptionCard key={desc.id} description={desc} />
                 ))}
               </div>
@@ -184,7 +185,7 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
             </div>
             {backlinks && backlinks.length > 0 ? (
               <div className="space-y-2">
-                {backlinks.map((bl) => (
+                {(backlinks as BacklinkEntry[]).map((bl: BacklinkEntry) => (
                   <div key={bl.id} className="text-xs">
                     <p className="text-gray-900 font-medium">{bl.anchor_text}</p>
                     <p className="text-gray-400 truncate">{bl.url}</p>

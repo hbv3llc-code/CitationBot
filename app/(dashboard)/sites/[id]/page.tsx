@@ -6,6 +6,7 @@ import {
   ExternalLink, Play, Ban, ChevronRight
 } from "lucide-react";
 import { formatDate, getStatusColor } from "@/lib/utils";
+import type { SiteAdapter } from "@/types";
 import { BlockSiteButton } from "@/components/sites/BlockSiteButton";
 import { RepairAdapterButton } from "@/components/sites/RepairAdapterButton";
 
@@ -127,7 +128,7 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <h2 className="font-semibold text-gray-900 mb-3">Adapter History</h2>
               <div className="space-y-2">
-                {adapters.map((adapter) => (
+                {(adapters as SiteAdapter[]).map((adapter: SiteAdapter) => (
                   <div key={adapter.id}
                     className={`flex items-center justify-between p-3 rounded-lg ${adapter.is_active ? "bg-green-50 border border-green-200" : "bg-gray-50 border border-gray-200"}`}>
                     <div>

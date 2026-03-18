@@ -122,7 +122,7 @@ export async function updateAccountStatus(
   });
 
   const rows = response.data.values ?? [];
-  const rowIndex = rows.findIndex((row) => row[1] === profileUrl);
+  const rowIndex = rows.findIndex((row: string[]) => row[1] === profileUrl);
 
   if (rowIndex === -1) return;
 

@@ -92,7 +92,7 @@ export default function EditSitePage() {
             <input
               required
               value={form.name}
-              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((p: typeof form) => ({ ...p, name: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
@@ -105,7 +105,7 @@ export default function EditSitePage() {
               required
               type="url"
               value={form.signup_url}
-              onChange={(e) => setForm((p) => ({ ...p, signup_url: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((p: typeof form) => ({ ...p, signup_url: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
             <p className="mt-1 text-xs text-gray-400">
@@ -118,8 +118,8 @@ export default function EditSitePage() {
               <input
                 type="checkbox"
                 checked={form.requires_email_verification}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, requires_email_verification: e.target.checked }))
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setForm((p: typeof form) => ({ ...p, requires_email_verification: e.target.checked }))
                 }
                 className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
@@ -135,8 +135,8 @@ export default function EditSitePage() {
               <input
                 type="checkbox"
                 checked={form.allows_backlinks}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, allows_backlinks: e.target.checked }))
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setForm((p: typeof form) => ({ ...p, allows_backlinks: e.target.checked }))
                 }
                 className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
               />

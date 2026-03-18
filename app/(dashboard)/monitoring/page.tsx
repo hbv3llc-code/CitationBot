@@ -21,7 +21,7 @@ export default async function MonitoringPage() {
   ]);
 
   const alerts = recentChecks ?? [];
-  const activeAccounts = accounts?.filter((a) => a.account_status === "active") ?? [];
+  const activeAccounts = accounts?.filter((a: { account_status: string }) => a.account_status === "active") ?? [];
 
   return (
     <div className="p-8">

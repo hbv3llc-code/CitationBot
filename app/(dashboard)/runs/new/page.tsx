@@ -22,7 +22,7 @@ export default function NewRunPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.from("businesses").select("*").order("name").then(({ data }) => {
+    supabase.from("businesses").select("*").order("name").then(({ data }: { data: Business[] | null }) => {
       if (data) setBusinesses(data);
     });
   }, []);
@@ -96,11 +96,11 @@ export default function NewRunPage() {
           <select
             required
             value={selectedBusiness}
-            onChange={(e) => setSelectedBusiness(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedBusiness(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
             <option value="">Select a business...</option>
-            {businesses.map((b) => (
+            {businesses.map((b: Business) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
           </select>
@@ -133,7 +133,7 @@ export default function NewRunPage() {
             <label className="block text-xs font-medium text-gray-600 mb-1">Or paste CSV text</label>
             <textarea
               value={csvText}
-              onChange={(e) => handleCsvChange(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleCsvChange(e.target.value)}
               rows={6}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
               placeholder={"Yelp,https://biz.yelp.com/signup\nYellow Pages,https://ypg.com/register\nFoursquare,https://foursquare.com/business/register"}
@@ -146,7 +146,7 @@ export default function NewRunPage() {
                 {parsedSites.length} sites ready to process
               </p>
               <div className="max-h-32 overflow-y-auto space-y-1">
-                {parsedSites.slice(0, 10).map((site, i) => (
+                {parsedSites.slice(0, 10).map((site: { name: string; signup_url: string }, i: number) => (
                   <div key={i} className="text-xs text-green-600 flex justify-between">
                     <span>{site.name}</span>
                     <span className="text-green-400 truncate ml-4 max-w-48">{site.signup_url}</span>

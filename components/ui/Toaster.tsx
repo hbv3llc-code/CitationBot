@@ -49,7 +49,7 @@ const ICON_STYLES: Record<ToastType, string> = {
   info: "text-blue-500",
 };
 
-function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
+function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void; key?: string }) {
   const Icon = ICONS[toast.type];
 
   useEffect(() => {
@@ -86,12 +86,12 @@ export function Toaster({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const dismiss = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    setToasts((prev: Toast[]) => prev.filter((t: Toast) => t.id !== id));
   }, []);
 
   const toast = useCallback((opts: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).slice(2);
-    setToasts((prev) => [...prev, { ...opts, id }]);
+    setToasts((prev: Toast[]) => [...prev, { ...opts, id }]);
   }, []);
 
   const success = useCallback(
@@ -112,8 +112,8 @@ export function Toaster({ children }: { children: React.ReactNode }) {
       {children}
       {toasts.length > 0 && (
         <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-          {toasts.map((t) => (
-            <ToastItem key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
+          {toasts.map((t: Toast) => (
+            <ToastItem key={t.id} toast={t} onDismiss={(): void => { dismiss(t.id); }} />
           ))}
         </div>
       )}

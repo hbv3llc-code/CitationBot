@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Trash2, Loader2 } from "lucide-react";
 import type { BusinessDescription } from "@/types";
 
-export function DescriptionCard({ description }: { description: BusinessDescription }) {
+export function DescriptionCard({ description }: { description: BusinessDescription; key?: string }) {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();

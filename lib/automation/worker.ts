@@ -122,7 +122,7 @@ async function processRun(run: {
 
   // Process up to concurrency jobs in parallel
   await Promise.all(
-    pendingResults.map((result) =>
+    pendingResults.map((result: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string }) =>
       processJob(result, business, descriptions ?? [], backlinks ?? [], proxies ?? [])
     )
   );

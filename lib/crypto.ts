@@ -60,7 +60,7 @@ export function generatePassword(length = 24): string {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
   const bytes = randomBytes(length);
-  return Array.from(bytes)
-    .map((b) => chars[b % chars.length])
+  return Array.from(bytes as Uint8Array)
+    .map((b: number) => chars[b % chars.length])
     .join("");
 }

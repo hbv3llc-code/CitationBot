@@ -55,8 +55,8 @@ export function TeachingSession({
     const fieldDef = FIELD_OPTIONS.find((f) => f.key === currentField);
     if (!fieldDef) return;
 
-    setFieldMappings((prev) => {
-      const filtered = prev.filter((m) => m.field_key !== currentField);
+    setFieldMappings((prev: FieldMapping[]) => {
+      const filtered = prev.filter((m: FieldMapping) => m.field_key !== currentField);
       return [...filtered, { field_key: currentField, selector: selectorInput.trim(), label: fieldDef.label }];
     });
     setCurrentField("");
@@ -64,7 +64,7 @@ export function TeachingSession({
   }
 
   function removeMapping(field_key: string) {
-    setFieldMappings((prev) => prev.filter((m) => m.field_key !== field_key));
+    setFieldMappings((prev: FieldMapping[]) => prev.filter((m: FieldMapping) => m.field_key !== field_key));
   }
 
   async function handleSave() {
@@ -74,7 +74,7 @@ export function TeachingSession({
     const instructions = {
       steps: [
         { type: "navigate", description: "Go to signup page" },
-        ...fieldMappings.map((m) => ({
+        ...fieldMappings.map((m: FieldMapping) => ({
           type: "fill",
           selector: m.selector,
           field_key: m.field_key,
@@ -82,7 +82,7 @@ export function TeachingSession({
         })),
         { type: "click", selector: "button[type=submit], input[type=submit]", description: "Submit form" },
       ],
-      field_mappings: fieldMappings.map((m) => ({
+      field_mappings: fieldMappings.map((m: FieldMapping) => ({
         field_key: m.field_key,
         selector: m.selector,
       })),
@@ -140,7 +140,7 @@ export function TeachingSession({
             <>
               <select
                 value={selectedBusiness}
-                onChange={(e) => setSelectedBusiness(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedBusiness(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 mb-4"
               >
                 <option value="">Select a business...</option>
@@ -260,19 +260,19 @@ export function TeachingSession({
             <div className="flex gap-2 mb-4">
               <select
                 value={currentField}
-                onChange={(e) => setCurrentField(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCurrentField(e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 <option value="">Select field...</option>
-                {FIELD_OPTIONS.filter((f) => !fieldMappings.find((m) => m.field_key === f.key))
+                {FIELD_OPTIONS.filter((f) => !fieldMappings.find((m: FieldMapping) => m.field_key === f.key))
                   .map((f) => (
                     <option key={f.key} value={f.key}>{f.label}</option>
                   ))}
               </select>
               <input
                 value={selectorInput}
-                onChange={(e) => setSelectorInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFieldMapping(); } }}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectorInput(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") { e.preventDefault(); addFieldMapping(); } }}
                 placeholder='CSS selector, e.g. input[name="business_name"]'
                 className="flex-[2] px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
@@ -289,7 +289,7 @@ export function TeachingSession({
             {/* Mapped fields list */}
             {fieldMappings.length > 0 ? (
               <div className="space-y-2 mb-4">
-                {fieldMappings.map((m) => (
+                {fieldMappings.map((m: FieldMapping) => (
                   <div key={m.field_key}
                     className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center gap-3">
@@ -347,7 +347,7 @@ export function TeachingSession({
           )}
 
           <div className="space-y-2 mb-6">
-            {fieldMappings.map((m) => (
+            {fieldMappings.map((m: FieldMapping) => (
               <div key={m.field_key}
                 className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
                 <span className="font-medium text-gray-900">{m.label}</span>
