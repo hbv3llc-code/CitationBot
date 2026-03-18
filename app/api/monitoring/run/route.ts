@@ -45,7 +45,7 @@ export async function POST(_req: NextRequest) {
         .update({ account_status: "removed" })
         .eq("id", account.id);
       alerts++;
-    } else if (result.status === "error" || result.status === "flagged") {
+    } else if (result.status === "error") {
       alerts++;
     }
 
