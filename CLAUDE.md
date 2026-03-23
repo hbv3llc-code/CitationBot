@@ -2,16 +2,17 @@
 
 ## Git Remote / Repository
 
-**Always push to:** `hbv3llc-code/concretecontractoraustin`
+**GitHub repo:** `hbv3llc-code/concretecontractoraustin`
 
-Before any push, verify the remote is correct:
+The local proxy routes pushes to this GitHub repo. The working proxy remote URL is:
+```
+http://local_proxy@127.0.0.1:39991/git/hbv3llc-code/CitationBot
+```
+
+Before any push, verify the remote resolves correctly:
 ```
 git remote -v
-```
-
-If the remote is wrong, fix it before pushing:
-```
-git remote set-url origin https://github.com/hbv3llc-code/concretecontractoraustin.git
+# Should show: http://local_proxy@127.0.0.1:39991/git/hbv3llc-code/CitationBot
 ```
 
 ## Branch
