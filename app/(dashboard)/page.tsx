@@ -27,10 +27,10 @@ export default async function DashboardPage() {
   ]);
 
   const stats = [
-    { label: "Businesses", value: businessCount ?? 0, icon: Building2, href: "/businesses", color: "text-blue-600 bg-blue-50" },
-    { label: "Citation Sites", value: siteCount ?? 0, icon: Globe, href: "/sites", color: "text-indigo-600 bg-indigo-50" },
-    { label: "Active Accounts", value: accountCount ?? 0, icon: CheckCircle2, href: "/monitoring", color: "text-green-600 bg-green-50" },
-    { label: "Alerts", value: alertCount ?? 0, icon: AlertCircle, href: "/monitoring", color: "text-red-600 bg-red-50" },
+    { label: "Businesses", value: businessCount ?? 0, icon: Building2, href: "/businesses", color: "text-white bg-[#002868]" },
+    { label: "Citation Sites", value: siteCount ?? 0, icon: Globe, href: "/sites", color: "text-white bg-[#002868]/80" },
+    { label: "Active Accounts", value: accountCount ?? 0, icon: CheckCircle2, href: "/monitoring", color: "text-white bg-[#BF0A30]/80" },
+    { label: "Alerts", value: alertCount ?? 0, icon: AlertCircle, href: "/monitoring", color: "text-white bg-[#BF0A30]" },
   ];
 
   return (

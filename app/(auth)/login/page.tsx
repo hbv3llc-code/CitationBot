@@ -30,12 +30,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#f8f9fb" }}>
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">CitationBot</h1>
-            <p className="text-gray-500 mt-1">Sign in to your account</p>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#002868" }}>
+                <svg viewBox="0 0 24 24" fill="white" className="w-4 h-4"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" /></svg>
+              </div>
+              <h1 className="text-2xl font-bold" style={{ color: "#002868" }}>CitationBot</h1>
+            </div>
+            <p className="text-slate-500 mt-1">Sign in to your account</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
