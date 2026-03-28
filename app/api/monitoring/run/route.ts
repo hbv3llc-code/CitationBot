@@ -1,24 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { eq, and, isNotNull, or, lte, isNull } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+import { db, citationAccounts, monitoringChecks, businesses } from "@/lib/db";
 import { checkProfileHealth } from "@/lib/automation/engine";
 
 export async function POST(_req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const now = new Date();
 
-  // Find accounts due for monitoring
-  const { data: accounts } = await supabase
-    .from("citation_accounts")
-    .select("*, sites(base_domain)")
-    .eq("account_status", "active")
-    .not("profile_url", "is", null)
-    .or(`next_monitor_at.is.null,next_monitor_at.lte.${new Date().toISOString()}`);
+  // Find active accounts due for monitoring (owned by this user)
+  const accounts = await db
+    .select({
+      id: citationAccounts.id,
+      profile_url: citationAccounts.profile_url,
+      monitor_interval_days: citationAccounts.monitor_interval_days,
+      next_monitor_at: citationAccounts.next_monitor_at,
+      business_id: citationAccounts.business_id,
+    })
+    .from(citationAccounts)
+    .innerJoin(businesses, and(
+      eq(citationAccounts.business_id, businesses.id),
+      eq(businesses.user_id, session.user.id)
+    ))
+    .where(
+      and(
+        eq(citationAccounts.account_status, "active"),
+        isNotNull(citationAccounts.profile_url),
+        or(
+          isNull(citationAccounts.next_monitor_at),
+          lte(citationAccounts.next_monitor_at, now)
+        )
+      )
+    );
 
-  if (!accounts || accounts.length === 0) {
+  if (!accounts.length) {
     return NextResponse.json({ message: "No accounts due for monitoring", count: 0 });
   }
 
@@ -31,36 +48,29 @@ export async function POST(_req: NextRequest) {
     const result = await checkProfileHealth(account.profile_url);
     checked++;
 
-    // Save monitoring check result
-    await supabase.from("monitoring_checks").insert({
+    await db.insert(monitoringChecks).values({
       citation_account_id: account.id,
       status: result.status,
       details: result.details ?? null,
     });
 
-    // Update account status if changed
     if (result.status === "removed") {
-      await supabase
-        .from("citation_accounts")
-        .update({ account_status: "removed" })
-        .eq("id", account.id);
+      await db
+        .update(citationAccounts)
+        .set({ account_status: "removed" })
+        .where(eq(citationAccounts.id, account.id));
       alerts++;
     } else if (result.status === "error") {
       alerts++;
     }
 
-    // Schedule next check
-    const intervalDays = account.monitor_interval_days ?? 30;
     const nextCheck = new Date();
-    nextCheck.setDate(nextCheck.getDate() + intervalDays);
+    nextCheck.setDate(nextCheck.getDate() + (account.monitor_interval_days ?? 30));
 
-    await supabase
-      .from("citation_accounts")
-      .update({
-        last_monitored_at: new Date().toISOString(),
-        next_monitor_at: nextCheck.toISOString(),
-      })
-      .eq("id", account.id);
+    await db
+      .update(citationAccounts)
+      .set({ last_monitored_at: now, next_monitor_at: nextCheck })
+      .where(eq(citationAccounts.id, account.id));
   }
 
   return NextResponse.json({ checked, alerts });

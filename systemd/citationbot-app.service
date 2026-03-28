@@ -1,0 +1,17 @@
+[Unit]
+Description=CitationBot Next.js Application
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=citationbot
+WorkingDirectory=/home/citationbot/CitationBot
+EnvironmentFile=/home/citationbot/CitationBot/.env
+ExecStart=/usr/bin/node_modules/.bin/next start -p 3000
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/citationbot/CitationBot/logs/app.log
+StandardError=append:/home/citationbot/CitationBot/logs/app-error.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { eq, and } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+import { db, siteLists } from "@/lib/db";
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { error } = await supabase
-    .from("site_lists")
-    .delete()
-    .eq("id", params.id)
-    .eq("user_id", user.id);
+  await db
+    .delete(siteLists)
+    .where(and(eq(siteLists.id, params.id), eq(siteLists.user_id, session.user.id)));
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

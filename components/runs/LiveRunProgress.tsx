@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { CheckCircle2, XCircle, Clock, SkipForward, Loader2, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { getStatusColor } from "@/lib/utils";
@@ -20,57 +19,30 @@ const ResultIcon = ({ status }: { status: string }) => {
   return <Clock className="w-4 h-4 text-gray-300 flex-shrink-0" />;
 };
 
+const POLL_INTERVAL_MS = 3000;
+
 export function LiveRunProgress({ initialRun, initialResults }: Props) {
   const [run, setRun] = useState(initialRun);
   const [results, setResults] = useState(initialResults);
-  const supabase = createClient();
 
   const isLive = run.status === "running" || run.status === "pending";
 
   const refetch = useCallback(async () => {
-    const [{ data: updatedRun }, { data: updatedResults }] = await Promise.all([
-      supabase
-        .from("bulk_runs")
-        .select("*, businesses(name)")
-        .eq("id", run.id)
-        .single(),
-      supabase
-        .from("bulk_run_results")
-        .select("*, citation_accounts(profile_url)")
-        .eq("bulk_run_id", run.id)
-        .order("created_at"),
-    ]);
-    if (updatedRun) setRun(updatedRun as typeof initialRun);
-    if (updatedResults) setResults(updatedResults as typeof initialResults);
-  }, [run.id, supabase]);
+    const res = await fetch(`/api/runs/${run.id}`);
+    if (!res.ok) return;
+    const { data } = await res.json();
+    if (data) {
+      const { results: updatedResults, ...updatedRun } = data;
+      setRun(updatedRun as typeof initialRun);
+      if (updatedResults) setResults(updatedResults as typeof initialResults);
+    }
+  }, [run.id]);
 
   useEffect(() => {
     if (!isLive) return;
-
-    // Subscribe to bulk_runs changes for this run
-    const runChannel = supabase
-      .channel(`run:${run.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "bulk_runs", filter: `id=eq.${run.id}` },
-        (payload: { new: Record<string, unknown> }) => {
-          setRun((prev: typeof initialRun) => ({ ...prev, ...(payload.new as Partial<BulkRun>) }));
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "bulk_run_results", filter: `bulk_run_id=eq.${run.id}` },
-        () => {
-          // Refetch results on any result change
-          refetch();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(runChannel);
-    };
-  }, [run.id, isLive, supabase, refetch]);
+    const interval = setInterval(refetch, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [isLive, refetch]);
 
   const pct = run.total_sites > 0 ? Math.round((run.completed_sites / run.total_sites) * 100) : 0;
   const failures = results.filter((r: typeof initialResults[number]) => r.status === "failed");

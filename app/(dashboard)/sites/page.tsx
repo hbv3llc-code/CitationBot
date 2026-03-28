@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
+import { db, sites } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { Globe, Plus, CheckCircle2, AlertCircle, Ban, Wrench } from "lucide-react";
 import type { Site } from "@/types";
@@ -13,15 +15,18 @@ const adapterStatusIcon = {
 };
 
 export default async function SitesPage() {
-  const supabase = await createClient();
-  const { data: sites } = await supabase
-    .from("sites")
-    .select("*")
-    .order("name");
+  const session = await auth();
+  const userId = session!.user!.id!;
 
-  const activeSites = sites?.filter((s: Site) => !s.is_blocked) ?? [];
-  const adapterActive = activeSites.filter((s: Site) => s.adapter_status === "active").length;
-  const adapterBroken = activeSites.filter((s: Site) => s.adapter_status === "broken").length;
+  const data = await db
+    .select()
+    .from(sites)
+    .where(eq(sites.user_id, userId))
+    .orderBy(sites.name);
+
+  const activeSites = data.filter((s) => !s.is_blocked);
+  const adapterActive = activeSites.filter((s) => s.adapter_status === "active").length;
+  const adapterBroken = activeSites.filter((s) => s.adapter_status === "broken").length;
 
   return (
     <div className="p-8">
@@ -33,16 +38,14 @@ export default async function SitesPage() {
             {adapterBroken > 0 && ` · ${adapterBroken} broken`}
           </p>
         </div>
-        <Link
-          href="/sites/new"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
+        <Link href="/sites/new"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" />
           Add Site
         </Link>
       </div>
 
-      {sites && sites.length > 0 ? (
+      {data.length > 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -55,7 +58,7 @@ export default async function SitesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {sites.map((site: Site) => {
+              {data.map((site) => {
                 const StatusIcon = adapterStatusIcon[site.adapter_status] ?? AlertCircle;
                 return (
                   <tr key={site.id} className={`hover:bg-gray-50 transition-colors ${site.is_blocked ? "opacity-50" : ""}`}>
@@ -89,10 +92,7 @@ export default async function SitesPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/sites/${site.id}`}
-                        className="text-xs text-primary hover:underline">
-                        View
-                      </Link>
+                      <Link href={`/sites/${site.id}`} className="text-xs text-primary hover:underline">View</Link>
                     </td>
                   </tr>
                 );
@@ -104,13 +104,9 @@ export default async function SitesPage() {
         <div className="bg-white rounded-xl border border-gray-200 py-20 text-center">
           <Globe className="w-12 h-12 text-gray-200 mx-auto mb-4" />
           <h3 className="text-gray-900 font-medium mb-1">No sites yet</h3>
-          <p className="text-sm text-gray-500 mb-6">
-            Add citation sites manually or import them via CSV during a bulk run.
-          </p>
-          <Link
-            href="/sites/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
+          <p className="text-sm text-gray-500 mb-6">Add citation sites manually or import them via CSV during a bulk run.</p>
+          <Link href="/sites/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
             <Plus className="w-4 h-4" />
             Add Site
           </Link>

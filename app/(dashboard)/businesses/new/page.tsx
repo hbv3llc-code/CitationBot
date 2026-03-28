@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { ArrowLeft } from "lucide-react";
 import { GoogleCategoryInput } from "@/components/businesses/GoogleCategoryInput";
 
@@ -16,56 +15,42 @@ const US_STATES = [
 
 export default function NewBusinessPage() {
   const router = useRouter();
-  const supabase = createClient();
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
-const [form, setForm] = useState({
-    name: "",
-    owner_name: "",
-    address_street: "",
-    address_city: "",
-    address_state: "",
-    address_zip: "",
-    phone: "",
-    email: "",
-    website: "",
-    founding_year: "",
+  const [form, setForm] = useState({
+    name: "", owner_name: "", address_street: "", address_city: "",
+    address_state: "", address_zip: "", phone: "", email: "", website: "", founding_year: "",
   });
 
   function update(field: string, value: string) {
     setForm((prev: typeof form) => ({ ...prev, [field]: value }));
   }
 
-
-async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError("Not authenticated"); setLoading(false); return; }
-
-    const { data: business, error: bizError } = await supabase
-      .from("businesses")
-      .insert({
-        user_id: user.id,
+    const res = await fetch("/api/businesses", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         ...form,
         founding_year: form.founding_year ? parseInt(form.founding_year) : null,
         address_country: "US",
         service_categories: categories,
-      })
-      .select()
-      .single();
+      }),
+    });
 
-    if (bizError || !business) {
-      setError(bizError?.message ?? "Failed to create business");
+    const { data, error: msg } = await res.json();
+    if (!res.ok || !data) {
+      setError(msg ?? "Failed to create business");
       setLoading(false);
       return;
     }
 
-router.push(`/businesses/${business.id}`);
+    router.push(`/businesses/${data.id}`);
   }
 
   return (
@@ -85,7 +70,6 @@ router.push(`/businesses/${business.id}`);
           <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
         )}
 
-        {/* Basic info */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Business Information</h2>
           <div className="grid grid-cols-2 gap-4">
@@ -129,7 +113,6 @@ router.push(`/businesses/${business.id}`);
           </div>
         </div>
 
-        {/* Address */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Address</h2>
           <div className="grid grid-cols-2 gap-4">
@@ -162,13 +145,12 @@ router.push(`/businesses/${business.id}`);
           </div>
         </div>
 
-        {/* Service categories */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-semibold text-gray-900">Service Categories</h2>
           <GoogleCategoryInput categories={categories} onChange={setCategories} />
         </div>
 
-<div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3">
           <Link href="/businesses"
             className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             Cancel

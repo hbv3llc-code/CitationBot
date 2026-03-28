@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Trash2 } from "lucide-react";
 import { GoogleCategoryInput } from "@/components/businesses/GoogleCategoryInput";
-import { createClient } from "@/lib/supabase/client";
 import type { Business, BacklinkEntry } from "@/types";
 
 const US_STATES = [
@@ -23,7 +22,6 @@ export function BusinessEditForm({
   initialBacklinks: BacklinkEntry[];
 }) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,19 +78,18 @@ function updateBacklink(index: number, field: "url" | "anchor_text", value: stri
       return;
     }
 
-    // Sync backlinks: delete all existing, re-insert
-    await supabase.from("backlink_pool").delete().eq("business_id", business.id);
-
+    // Sync backlinks via API
     const validBacklinks = backlinks.filter((b: BacklinkItem) => b.url && b.anchor_text);
-    if (validBacklinks.length > 0) {
-      await supabase.from("backlink_pool").insert(
-        validBacklinks.map(({ url, anchor_text }: { url: string; anchor_text: string }) => ({
-          business_id: business.id,
+    await fetch(`/api/businesses/${business.id}/backlinks`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        backlinks: validBacklinks.map(({ url, anchor_text }: { url: string; anchor_text: string }) => ({
           url,
           anchor_text,
-        }))
-      );
-    }
+        })),
+      }),
+    });
 
     router.push(`/businesses/${business.id}`);
     router.refresh();

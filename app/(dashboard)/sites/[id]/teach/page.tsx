@@ -1,15 +1,40 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
+import { db, sites, businesses } from "@/lib/db";
+import { eq, and, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { TeachingSession } from "@/components/sites/TeachingSession";
 
 export default async function TeachSitePage({ params }: { params: { id: string } }) {
-  const supabase = await createClient();
+  const session = await auth();
+  const userId = session!.user!.id!;
 
-  const [{ data: site }, { data: businesses }] = await Promise.all([
-    supabase.from("sites").select("*").eq("id", params.id).single(),
-    supabase.from("businesses").select("id, name, phone, email, website, address_street, address_city, address_state, address_zip, owner_name, founding_year, service_categories").order("name"),
+  const [site, businessRows] = await Promise.all([
+    db
+      .select()
+      .from(sites)
+      .where(and(eq(sites.id, params.id), eq(sites.user_id, userId)))
+      .limit(1)
+      .then((rows) => rows[0]),
+    db
+      .select({
+        id: businesses.id,
+        name: businesses.name,
+        phone: businesses.phone,
+        email: businesses.email,
+        website: businesses.website,
+        address_street: businesses.address_street,
+        address_city: businesses.address_city,
+        address_state: businesses.address_state,
+        address_zip: businesses.address_zip,
+        owner_name: businesses.owner_name,
+        founding_year: businesses.founding_year,
+        service_categories: businesses.service_categories,
+      })
+      .from(businesses)
+      .where(eq(businesses.user_id, userId))
+      .orderBy(asc(businesses.name)),
   ]);
 
   if (!site) notFound();
@@ -28,7 +53,8 @@ export default async function TeachSitePage({ params }: { params: { id: string }
         </div>
       </div>
 
-      <TeachingSession site={site} businesses={businesses ?? []} />
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <TeachingSession site={site as any} businesses={businessRows as any} />
     </div>
   );
 }

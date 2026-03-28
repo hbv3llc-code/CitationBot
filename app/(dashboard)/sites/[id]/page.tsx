@@ -1,34 +1,41 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
+import { db, sites, siteAdapters, citationAccounts, businesses } from "@/lib/db";
+import { eq, and, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowLeft, Globe, CheckCircle2, AlertCircle, Wrench,
-  ExternalLink, Play, Ban, ChevronRight
-} from "lucide-react";
+import { ArrowLeft, Globe, CheckCircle2, AlertCircle, Wrench, ExternalLink, Play, Ban, ChevronRight } from "lucide-react";
 import { formatDate, getStatusColor } from "@/lib/utils";
 import type { SiteAdapter } from "@/types";
 import { BlockSiteButton } from "@/components/sites/BlockSiteButton";
 import { RepairAdapterButton } from "@/components/sites/RepairAdapterButton";
 
 export default async function SiteDetailPage({ params }: { params: { id: string } }) {
-  const supabase = await createClient();
+  const session = await auth();
+  const userId = session!.user!.id!;
 
-  const [{ data: site }, { data: adapters }, { data: accounts }] = await Promise.all([
-    supabase.from("sites").select("*").eq("id", params.id).single(),
-    supabase
-      .from("site_adapters")
-      .select("*")
-      .eq("site_id", params.id)
-      .order("version", { ascending: false }),
-    supabase
-      .from("citation_accounts")
-      .select("*, businesses(name)")
-      .eq("site_id", params.id)
-      .order("created_at", { ascending: false })
-      .limit(20),
-  ]);
+  const [site] = await db
+    .select()
+    .from(sites)
+    .where(and(eq(sites.id, params.id), eq(sites.user_id, userId)))
+    .limit(1);
 
   if (!site) notFound();
+
+  const [adapters, accounts] = await Promise.all([
+    db.select().from(siteAdapters).where(eq(siteAdapters.site_id, params.id)).orderBy(desc(siteAdapters.version)),
+    db.select({
+      id: citationAccounts.id,
+      email_used: citationAccounts.email_used,
+      profile_url: citationAccounts.profile_url,
+      account_status: citationAccounts.account_status,
+      business_name: businesses.name,
+    })
+      .from(citationAccounts)
+      .leftJoin(businesses, eq(citationAccounts.business_id, businesses.id))
+      .where(eq(citationAccounts.site_id, params.id))
+      .orderBy(desc(citationAccounts.created_at))
+      .limit(20),
+  ]);
 
   const statusConfig = {
     active: { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 border-green-200" },
@@ -76,10 +83,7 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-        {/* Left — adapter status + history */}
         <div className="col-span-2 space-y-4">
-
-          {/* Adapter status card */}
           <div className={`rounded-xl border p-5 ${sc.bg}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -94,27 +98,21 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
                   </p>
                   {site.last_adapter_check_at && (
                     <p className="text-xs text-gray-400 mt-0.5">
-                      Last checked {formatDate(site.last_adapter_check_at)}
+                      Last checked {formatDate(site.last_adapter_check_at.toString())}
                     </p>
                   )}
                 </div>
               </div>
-
-              {site.adapter_status === "broken" && (
-                <RepairAdapterButton siteId={site.id} />
-              )}
+              {site.adapter_status === "broken" && <RepairAdapterButton siteId={site.id} />}
             </div>
-
             {site.adapter_status === "unknown" && (
               <p className="text-sm text-gray-500 mt-3">
                 CitationBot doesn&apos;t know how to fill forms on this site yet.{" "}
                 <Link href={`/sites/${site.id}/teach`} className="text-primary hover:underline font-medium">
                   Start a teaching session
-                </Link>{" "}
-                to automate it.
+                </Link>{" "}to automate it.
               </p>
             )}
-
             {site.adapter_status === "broken" && (
               <p className="text-sm text-red-700 mt-3">
                 The site&apos;s layout has changed and the saved adapter no longer works.
@@ -123,26 +121,24 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
             )}
           </div>
 
-          {/* Adapter version history */}
-          {adapters && adapters.length > 0 && (
+          {adapters.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <h2 className="font-semibold text-gray-900 mb-3">Adapter History</h2>
               <div className="space-y-2">
-                {(adapters as SiteAdapter[]).map((adapter: SiteAdapter) => (
+                {(adapters as unknown as SiteAdapter[]).map((adapter: SiteAdapter) => (
                   <div key={adapter.id}
                     className={`flex items-center justify-between p-3 rounded-lg ${adapter.is_active ? "bg-green-50 border border-green-200" : "bg-gray-50 border border-gray-200"}`}>
                     <div>
                       <p className={`text-sm font-medium ${adapter.is_active ? "text-green-700" : "text-gray-600"}`}>
-                        Version {adapter.version}
-                        {adapter.is_active && <span className="ml-2 text-xs">(active)</span>}
+                        Version {adapter.version}{adapter.is_active && <span className="ml-2 text-xs">(active)</span>}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         Taught by {adapter.taught_by} · {formatDate(adapter.created_at)}
                       </p>
                     </div>
                     <div className="text-xs text-gray-400">
-                      {adapter.instructions?.steps?.length ?? 0} steps ·{" "}
-                      {adapter.instructions?.field_mappings?.length ?? 0} fields
+                      {(adapter.instructions as { steps?: unknown[] })?.steps?.length ?? 0} steps ·{" "}
+                      {(adapter.instructions as { field_mappings?: unknown[] })?.field_mappings?.length ?? 0} fields
                     </div>
                   </div>
                 ))}
@@ -150,21 +146,16 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
             </div>
           )}
 
-          {/* Citation accounts on this site */}
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-200 bg-gray-50">
-              <h2 className="font-semibold text-gray-900">
-                Citation Accounts ({accounts?.length ?? 0})
-              </h2>
+              <h2 className="font-semibold text-gray-900">Citation Accounts ({accounts.length})</h2>
             </div>
-            {accounts && accounts.length > 0 ? (
+            {accounts.length > 0 ? (
               <div className="divide-y divide-gray-100">
-                {accounts.map((account: { id: string; businesses?: { name: string } | null; email_used: string; profile_url: string | null; account_status: string }) => (
+                {accounts.map((account) => (
                   <div key={account.id} className="flex items-center justify-between px-5 py-3">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {account.businesses?.name ?? "—"}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900">{account.business_name ?? "—"}</p>
                       <p className="text-xs text-gray-400">{account.email_used}</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -189,7 +180,6 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
           </div>
         </div>
 
-        {/* Right sidebar */}
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900 mb-3">Site Details</h2>
@@ -206,12 +196,11 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-400">Added</dt>
-                <dd className="text-gray-600">{formatDate(site.created_at)}</dd>
+                <dd className="text-gray-600">{formatDate(site.created_at.toString())}</dd>
               </div>
             </dl>
           </div>
 
-          {/* Quick actions */}
           <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
             <Link href={`/sites/${site.id}/teach`}
               className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors">
@@ -221,7 +210,7 @@ export default async function SiteDetailPage({ params }: { params: { id: string 
               </div>
               <ChevronRight className="w-4 h-4 text-gray-300" />
             </Link>
-            <Link href={`/runs/new`}
+            <Link href="/runs/new"
               className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <Globe className="w-4 h-4 text-gray-400" />

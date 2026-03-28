@@ -1,14 +1,28 @@
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
+import { db, proxyPool } from "@/lib/db";
+import { eq } from "drizzle-orm";
 import { Shield, Globe } from "lucide-react";
 import { ProxySettingsForm } from "@/components/settings/ProxySettingsForm";
 
 export default async function SettingsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: proxies } = await supabase
-    .from("proxy_pool")
-    .select("id, host, port, username, proxy_type, is_active, is_flagged, fail_count, last_used_at")
-    .order("created_at");
+  const session = await auth();
+  const userId = session!.user!.id!;
+
+  const proxies = await db
+    .select({
+      id: proxyPool.id,
+      host: proxyPool.host,
+      port: proxyPool.port,
+      username: proxyPool.username,
+      proxy_type: proxyPool.proxy_type,
+      is_active: proxyPool.is_active,
+      is_flagged: proxyPool.is_flagged,
+      fail_count: proxyPool.fail_count,
+      last_used_at: proxyPool.last_used_at,
+    })
+    .from(proxyPool)
+    .where(eq(proxyPool.user_id, userId))
+    .orderBy(proxyPool.created_at);
 
   return (
     <div className="p-8 max-w-3xl">
@@ -18,7 +32,6 @@ export default async function SettingsPage() {
       </div>
 
       <div className="space-y-6">
-        {/* Account */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Shield className="w-4 h-4 text-gray-400" />
@@ -27,22 +40,18 @@ export default async function SettingsPage() {
           <dl className="space-y-2 text-sm">
             <div className="flex">
               <dt className="w-24 text-gray-400">Email</dt>
-              <dd className="text-gray-900">{user?.email}</dd>
+              <dd className="text-gray-900">{session?.user?.email}</dd>
             </div>
           </dl>
           <div className="mt-4 pt-4 border-t border-gray-100">
             <form action="/api/auth/signout" method="POST">
-              <button
-                type="submit"
-                className="text-sm text-red-500 hover:text-red-700 transition-colors"
-              >
+              <button type="submit" className="text-sm text-red-500 hover:text-red-700 transition-colors">
                 Sign out
               </button>
             </form>
           </div>
         </div>
 
-        {/* Proxy pool */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center gap-2 mb-1">
             <Globe className="w-4 h-4 text-gray-400" />
@@ -52,10 +61,10 @@ export default async function SettingsPage() {
             Residential proxies protect your business domain from being flagged. CitationBot automatically
             rotates proxies and alerts you if the pool drops below a reliable level.
           </p>
-          <ProxySettingsForm proxies={proxies ?? []} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <ProxySettingsForm proxies={proxies as any} />
         </div>
 
-        {/* Security info */}
         <div className="bg-gray-50 rounded-xl border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-700 mb-3 text-sm">Security</h2>
           <ul className="space-y-2 text-xs text-gray-500">
@@ -73,7 +82,7 @@ export default async function SettingsPage() {
             </li>
             <li className="flex items-start gap-2">
               <Shield className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
-              All data is stored in a private Supabase database. Dashboard access requires email and password authentication.
+              All data is stored in a private PostgreSQL database. Dashboard access requires email and password authentication.
             </li>
           </ul>
         </div>

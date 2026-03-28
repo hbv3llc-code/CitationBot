@@ -1,43 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { eq, and } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+import { db, businesses, citationAccounts } from "@/lib/db";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
 
   // Verify ownership via business
-  const { data: account } = await supabase
-    .from("citation_accounts")
-    .select("business_id")
-    .eq("id", params.id)
-    .single();
+  const [account] = await db
+    .select({ business_id: citationAccounts.business_id })
+    .from(citationAccounts)
+    .where(eq(citationAccounts.id, params.id))
+    .limit(1);
 
   if (!account) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("id", account.business_id)
-    .eq("user_id", user.id)
-    .single();
+  const [biz] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(and(eq(businesses.id, account.business_id), eq(businesses.user_id, session.user.id)))
+    .limit(1);
 
-  if (!business) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!biz) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const allowed = ["monitor_interval_days", "next_monitor_at", "account_status", "profile_url"];
   const updates = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k))
   );
 
-  const { data, error } = await supabase
-    .from("citation_accounts")
-    .update(updates)
-    .eq("id", params.id)
-    .select()
-    .single();
+  const [data] = await db
+    .update(citationAccounts)
+    .set(updates)
+    .where(eq(citationAccounts.id, params.id))
+    .returning();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
 }

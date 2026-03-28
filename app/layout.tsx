@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/Toaster";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "CitationBot — Automated Local Citation Building",
@@ -18,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <Toaster>{children}</Toaster>
       </body>
     </html>

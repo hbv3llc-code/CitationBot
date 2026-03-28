@@ -1,0 +1,17 @@
+[Unit]
+Description=CitationBot Automation Worker
+After=network.target postgresql.service citationbot-app.service
+
+[Service]
+Type=simple
+User=citationbot
+WorkingDirectory=/home/citationbot/CitationBot
+EnvironmentFile=/home/citationbot/CitationBot/.env
+ExecStart=/usr/bin/npx tsx scripts/run-worker.ts
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/home/citationbot/CitationBot/logs/worker.log
+StandardError=append:/home/citationbot/CitationBot/logs/worker-error.log
+
+[Install]
+WantedBy=multi-user.target

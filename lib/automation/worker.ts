@@ -8,17 +8,24 @@
  * up to the run's configured concurrency, and saves results back to the database.
  */
 
-import { createClient } from "@supabase/supabase-js";
+import {
+  db,
+  bulkRuns,
+  bulkRunResults,
+  businesses,
+  businessDescriptions,
+  backlinkPool,
+  proxyPool,
+  sites,
+  siteAdapters,
+  citationAccounts,
+  monitoringChecks,
+} from "@/lib/db";
+import { eq, and, inArray, lte, isNotNull, asc, sql } from "drizzle-orm";
 import { runSignup, checkProfileHealth } from "./engine";
 import { waitForVerificationEmail } from "./email-verifier";
 import { decrypt, generatePassword, encrypt } from "@/lib/crypto";
 import type { Business, BusinessFields, Proxy } from "@/types";
-
-// Use service role for the worker (bypasses RLS)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const POLL_INTERVAL_MS = parseInt(process.env.WORKER_POLL_INTERVAL_MS ?? "5000", 10);
 
@@ -26,7 +33,7 @@ const POLL_INTERVAL_MS = parseInt(process.env.WORKER_POLL_INTERVAL_MS ?? "5000",
 // MAIN LOOP
 // ============================================================
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   console.log("[worker] CitationBot worker started");
 
   while (true) {
@@ -51,14 +58,11 @@ async function tick(): Promise<void> {
 // ============================================================
 
 async function processPendingRuns(): Promise<void> {
-  // Find runs that are pending or running and have pending results
-  const { data: runs } = await supabase
-    .from("bulk_runs")
-    .select("*")
-    .in("status", ["pending", "running"])
-    .order("created_at");
-
-  if (!runs || runs.length === 0) return;
+  const runs = await db
+    .select()
+    .from(bulkRuns)
+    .where(inArray(bulkRuns.status, ["pending", "running"]))
+    .orderBy(asc(bulkRuns.created_at));
 
   for (const run of runs) {
     await processRun(run);
@@ -73,64 +77,64 @@ async function processRun(run: {
 }): Promise<void> {
   // Mark as running on first tick
   if (run.status === "pending") {
-    await supabase
-      .from("bulk_runs")
-      .update({ status: "running", started_at: new Date().toISOString() })
-      .eq("id", run.id);
+    await db
+      .update(bulkRuns)
+      .set({ status: "running", started_at: new Date() })
+      .where(eq(bulkRuns.id, run.id));
   }
 
-  // Load business + active description + backlinks
-  const [{ data: business }, { data: descriptions }, { data: backlinks }, { data: proxies }] =
-    await Promise.all([
-      supabase.from("businesses").select("*").eq("id", run.business_id).single(),
-      supabase
-        .from("business_descriptions")
-        .select("*")
-        .eq("business_id", run.business_id)
-        .eq("approved", true),
-      supabase.from("backlink_pool").select("*").eq("business_id", run.business_id).order("created_at", { ascending: true }),
-      supabase
-        .from("proxy_pool")
-        .select("*")
-        .eq("is_active", true)
-        .eq("is_flagged", false)
-        .order("last_used_at", { ascending: true, nullsFirst: true }),
-    ]);
+  // Load business + active descriptions + backlinks + proxies
+  const [businessRows, descRows, backlinkRows, proxyRows] = await Promise.all([
+    db.select().from(businesses).where(eq(businesses.id, run.business_id)).limit(1),
+    db.select().from(businessDescriptions)
+      .where(and(
+        eq(businessDescriptions.business_id, run.business_id),
+        eq(businessDescriptions.approved, true)
+      )),
+    db.select().from(backlinkPool)
+      .where(eq(backlinkPool.business_id, run.business_id))
+      .orderBy(asc(backlinkPool.created_at)),
+    db.select().from(proxyPool)
+      .where(and(eq(proxyPool.is_active, true), eq(proxyPool.is_flagged, false)))
+      .orderBy(asc(proxyPool.last_used_at)),
+  ]);
+
+  const business = businessRows[0];
 
   if (!business) {
     console.error(`[worker] Business not found for run ${run.id}`);
-    await supabase
-      .from("bulk_runs")
-      .update({ status: "failed", completed_at: new Date().toISOString() })
-      .eq("id", run.id);
+    await db
+      .update(bulkRuns)
+      .set({ status: "failed", completed_at: new Date() })
+      .where(eq(bulkRuns.id, run.id));
     return;
   }
 
   // Pick pending results up to concurrency limit
-  const { data: pendingResults } = await supabase
-    .from("bulk_run_results")
-    .select("*")
-    .eq("bulk_run_id", run.id)
-    .eq("status", "pending")
+  const pendingResults = await db
+    .select()
+    .from(bulkRunResults)
+    .where(and(
+      eq(bulkRunResults.bulk_run_id, run.id),
+      eq(bulkRunResults.status, "pending")
+    ))
     .limit(run.concurrency);
 
-  if (!pendingResults || pendingResults.length === 0) {
-    // Check if all done
+  if (pendingResults.length === 0) {
     await maybeCompleteRun(run.id);
     return;
   }
 
-  // Process up to concurrency jobs in parallel
   await Promise.all(
-    pendingResults.map((result: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string }, index: number) =>
-      processJob(result, index, business, descriptions ?? [], backlinks ?? [], proxies ?? [])
+    pendingResults.map((result, index) =>
+      processJob(result, index, business as unknown as Business, descRows, backlinkRows, proxyRows as unknown as Proxy[])
     )
   );
 
   await maybeCompleteRun(run.id);
 }
 
-async function processJob(
+export async function processJob(
   result: { id: string; bulk_run_id: string; site_id: string | null; site_name: string; signup_url: string },
   jobIndex: number,
   business: Business,
@@ -141,40 +145,40 @@ async function processJob(
   console.log(`[worker] Processing: ${result.site_name} (run=${result.bulk_run_id})`);
 
   // Mark result as running
-  await supabase
-    .from("bulk_run_results")
-    .update({ status: "running", started_at: new Date().toISOString() })
-    .eq("id", result.id);
+  await db
+    .update(bulkRunResults)
+    .set({ status: "running", started_at: new Date() })
+    .where(eq(bulkRunResults.id, result.id));
 
   try {
-    // Check if site is blocked
     if (result.site_id) {
-      const { data: site } = await supabase
-        .from("sites")
-        .select("is_blocked, adapter_status")
-        .eq("id", result.site_id)
-        .single();
+      const [siteRow] = await db
+        .select({ is_blocked: sites.is_blocked, adapter_status: sites.adapter_status })
+        .from(sites)
+        .where(eq(sites.id, result.site_id))
+        .limit(1);
 
-      if (site?.is_blocked) {
+      if (siteRow?.is_blocked) {
         await finishResult(result.id, result.bulk_run_id, "blocked", "Site is on Do Not Run list");
         return;
       }
 
       // Check if already has an account for this business + site
-      const { data: existing } = await supabase
-        .from("citation_accounts")
-        .select("id")
-        .eq("business_id", business.id)
-        .eq("site_id", result.site_id)
-        .single();
+      const existing = await db
+        .select({ id: citationAccounts.id })
+        .from(citationAccounts)
+        .where(and(
+          eq(citationAccounts.business_id, business.id),
+          eq(citationAccounts.site_id, result.site_id)
+        ))
+        .limit(1);
 
-      if (existing) {
+      if (existing.length > 0) {
         await finishResult(result.id, result.bulk_run_id, "skipped", "Account already exists");
         return;
       }
 
-      // Check if adapter exists
-      if (site?.adapter_status !== "active") {
+      if (siteRow?.adapter_status !== "active") {
         await finishResult(result.id, result.bulk_run_id, "failed", "No active adapter for this site");
         return;
       }
@@ -184,29 +188,27 @@ async function processJob(
     }
 
     // Load active adapter
-    const { data: adapter } = await supabase
-      .from("site_adapters")
-      .select("*")
-      .eq("site_id", result.site_id)
-      .eq("is_active", true)
-      .single();
+    const [adapter] = await db
+      .select()
+      .from(siteAdapters)
+      .where(and(
+        eq(siteAdapters.site_id, result.site_id!),
+        eq(siteAdapters.is_active, true)
+      ))
+      .limit(1);
 
     if (!adapter) {
       await finishResult(result.id, result.bulk_run_id, "failed", "Adapter not found");
       return;
     }
 
-    // Pick a description (round-robin through approved ones, fallback to empty)
+    // Pick description and backlink
     const description = descriptions[Math.floor(Math.random() * Math.max(descriptions.length, 1))];
-
-    // Pick a backlink (in order, cycling through the pool)
     const backlink = backlinks.length > 0 ? backlinks[jobIndex % backlinks.length] : undefined;
 
-    // Generate unique password
     const password = generatePassword(20);
     const encryptedPassword = encrypt(password);
 
-    // Build business fields
     const fields: BusinessFields = {
       name: business.name,
       owner_name: business.owner_name,
@@ -224,11 +226,10 @@ async function processJob(
       backlink_anchor: backlink?.anchor_text ?? "",
     };
 
-    // Pick proxy (least recently used, unflagged)
     const proxy = proxies.length > 0 ? proxies[0] : undefined;
 
     // Run signup automation
-    const automationResult = await runSignup(result.signup_url, adapter.instructions, fields, {
+    const automationResult = await runSignup(result.signup_url, adapter.instructions as import("@/types").AdapterInstructions, fields, {
       proxy,
       headless: true,
     });
@@ -239,17 +240,19 @@ async function processJob(
     }
 
     // Handle email verification if site requires it
-    const { data: site } = await supabase
-      .from("sites")
-      .select("requires_email_verification, base_domain")
-      .eq("id", result.site_id!)
-      .single();
+    const [siteForVerification] = await db
+      .select({
+        requires_email_verification: sites.requires_email_verification,
+        base_domain: sites.base_domain,
+      })
+      .from(sites)
+      .where(eq(sites.id, result.site_id!))
+      .limit(1);
 
-    if (site?.requires_email_verification && business.gmail_refresh_token) {
+    if (siteForVerification?.requires_email_verification && business.gmail_refresh_token) {
       const refreshToken = decrypt(business.gmail_refresh_token);
-      const emailResult = await waitForVerificationEmail(refreshToken, site.base_domain);
+      const emailResult = await waitForVerificationEmail(refreshToken, siteForVerification.base_domain);
       if (emailResult.verificationUrl) {
-        // Click the verification link
         const { default: playwright } = await import("playwright");
         const browser = await playwright.chromium.launch({ headless: true });
         const page = await browser.newPage();
@@ -259,48 +262,51 @@ async function processJob(
     }
 
     // Save citation account
-    const { data: account } = await supabase
-      .from("citation_accounts")
-      .insert({
+    const [account] = await db
+      .insert(citationAccounts)
+      .values({
         business_id: business.id,
-        site_id: result.site_id,
+        site_id: result.site_id!,
         profile_url: automationResult.profileUrl,
         email_used: business.email,
         encrypted_password: encryptedPassword,
-        account_status: site?.requires_email_verification ? "pending_verification" : "active",
+        account_status: siteForVerification?.requires_email_verification
+          ? "pending_verification"
+          : "active",
         description_id: description?.id ?? null,
         next_monitor_at: (() => {
           const d = new Date();
           d.setDate(d.getDate() + 30);
-          return d.toISOString();
+          return d;
         })(),
       })
-      .select()
-      .single();
+      .returning();
 
     // Mark proxy as used
     if (proxy) {
-      await supabase
-        .from("proxy_pool")
-        .update({ last_used_at: new Date().toISOString() })
-        .eq("id", proxy.id);
+      await db
+        .update(proxyPool)
+        .set({ last_used_at: new Date() })
+        .where(eq(proxyPool.id, proxy.id));
     }
 
-    await supabase
-      .from("bulk_run_results")
-      .update({
+    await db
+      .update(bulkRunResults)
+      .set({
         status: "success",
         citation_account_id: account?.id ?? null,
-        completed_at: new Date().toISOString(),
+        completed_at: new Date(),
       })
-      .eq("id", result.id);
+      .where(eq(bulkRunResults.id, result.id));
 
-    // Update run counters
-    await supabase.rpc("increment_run_counters", {
-      run_id: result.bulk_run_id,
-      completed_delta: 1,
-      successful_delta: 1,
-    });
+    // Atomically increment run counters
+    await db
+      .update(bulkRuns)
+      .set({
+        completed_sites: sql`${bulkRuns.completed_sites} + 1`,
+        successful_sites: sql`${bulkRuns.successful_sites} + 1`,
+      })
+      .where(eq(bulkRuns.id, result.bulk_run_id));
 
     console.log(`[worker] Success: ${result.site_name}`);
   } catch (err) {
@@ -316,33 +322,36 @@ async function finishResult(
   status: "failed" | "skipped" | "blocked",
   reason: string
 ): Promise<void> {
-  await supabase
-    .from("bulk_run_results")
-    .update({ status, failure_reason: reason, completed_at: new Date().toISOString() })
-    .eq("id", resultId);
+  await db
+    .update(bulkRunResults)
+    .set({ status, failure_reason: reason, completed_at: new Date() })
+    .where(eq(bulkRunResults.id, resultId));
 
-  await supabase.rpc("increment_run_counters", {
-    run_id: runId,
-    completed_delta: 1,
-    successful_delta: 0,
-    ...(status === "failed" ? { failed_delta: 1 } : { skipped_delta: 1 }),
-  });
+  await db
+    .update(bulkRuns)
+    .set({
+      completed_sites: sql`${bulkRuns.completed_sites} + 1`,
+      ...(status === "failed"
+        ? { failed_sites: sql`${bulkRuns.failed_sites} + 1` }
+        : { skipped_sites: sql`${bulkRuns.skipped_sites} + 1` }),
+    })
+    .where(eq(bulkRuns.id, runId));
 }
 
 async function maybeCompleteRun(runId: string): Promise<void> {
-  const { data: run } = await supabase
-    .from("bulk_runs")
-    .select("total_sites, completed_sites")
-    .eq("id", runId)
-    .single();
+  const [run] = await db
+    .select({ total_sites: bulkRuns.total_sites, completed_sites: bulkRuns.completed_sites })
+    .from(bulkRuns)
+    .where(eq(bulkRuns.id, runId))
+    .limit(1);
 
   if (!run) return;
 
   if (run.completed_sites >= run.total_sites) {
-    await supabase
-      .from("bulk_runs")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", runId);
+    await db
+      .update(bulkRuns)
+      .set({ status: "completed", completed_at: new Date() })
+      .where(eq(bulkRuns.id, runId));
     console.log(`[worker] Run ${runId} completed`);
   }
 }
@@ -351,16 +360,28 @@ async function maybeCompleteRun(runId: string): Promise<void> {
 // MONITORING
 // ============================================================
 
-async function processDueMonitoringChecks(): Promise<void> {
-  const { data: accounts } = await supabase
-    .from("citation_accounts")
-    .select("*, sites(base_domain, name), businesses(name)")
-    .eq("account_status", "active")
-    .not("profile_url", "is", null)
-    .lte("next_monitor_at", new Date().toISOString())
+export async function processDueMonitoringChecks(): Promise<void> {
+  const accounts = await db
+    .select({
+      id: citationAccounts.id,
+      profile_url: citationAccounts.profile_url,
+      monitor_interval_days: citationAccounts.monitor_interval_days,
+      business_name: businesses.name,
+      site_name: sites.name,
+    })
+    .from(citationAccounts)
+    .innerJoin(businesses, eq(citationAccounts.business_id, businesses.id))
+    .innerJoin(sites, eq(citationAccounts.site_id, sites.id))
+    .where(
+      and(
+        eq(citationAccounts.account_status, "active"),
+        isNotNull(citationAccounts.profile_url),
+        lte(citationAccounts.next_monitor_at, new Date())
+      )
+    )
     .limit(10);
 
-  if (!accounts || accounts.length === 0) return;
+  if (accounts.length === 0) return;
 
   console.log(`[worker] Checking ${accounts.length} profiles`);
 
@@ -369,31 +390,31 @@ async function processDueMonitoringChecks(): Promise<void> {
 
     const result = await checkProfileHealth(account.profile_url);
 
-    await supabase.from("monitoring_checks").insert({
+    await db.insert(monitoringChecks).values({
       citation_account_id: account.id,
       status: result.status,
       details: result.details ?? null,
     });
 
     if (result.status === "removed") {
-      await supabase
-        .from("citation_accounts")
-        .update({ account_status: "removed" })
-        .eq("id", account.id);
-      console.log(`[worker] ALERT: Profile removed — ${account.businesses?.name} on ${account.sites?.name}`);
+      await db
+        .update(citationAccounts)
+        .set({ account_status: "removed" })
+        .where(eq(citationAccounts.id, account.id));
+      console.log(`[worker] ALERT: Profile removed — ${account.business_name} on ${account.site_name}`);
     }
 
     const intervalDays = account.monitor_interval_days ?? 30;
     const nextCheck = new Date();
     nextCheck.setDate(nextCheck.getDate() + intervalDays);
 
-    await supabase
-      .from("citation_accounts")
-      .update({
-        last_monitored_at: new Date().toISOString(),
-        next_monitor_at: nextCheck.toISOString(),
+    await db
+      .update(citationAccounts)
+      .set({
+        last_monitored_at: new Date(),
+        next_monitor_at: nextCheck,
       })
-      .eq("id", account.id);
+      .where(eq(citationAccounts.id, account.id));
   }
 }
 
@@ -406,12 +427,11 @@ function sleep(ms: number): Promise<void> {
 }
 
 // Entry point — ESM-compatible main detection
-const isMain = process.argv[1] &&
+const isMain =
+  process.argv[1] &&
   (import.meta.url === `file://${process.argv[1]}` ||
-   import.meta.url === `file://${process.argv[1]}.js`);
+    import.meta.url === `file://${process.argv[1]}.js`);
 
 if (isMain) {
   run().catch(console.error);
 }
-
-export { processJob, processDueMonitoringChecks };

@@ -1,99 +1,101 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { eq, and, desc } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+import { db, businesses, bulkRuns, bulkRunResults, sites } from "@/lib/db";
 import { extractDomain } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { business_id, sites, concurrency = 1 } = body;
+  const { business_id, sites: siteList, concurrency = 1 } = body;
 
-  if (!business_id || !Array.isArray(sites) || sites.length === 0) {
+  if (!business_id || !Array.isArray(siteList) || siteList.length === 0) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Verify business belongs to user
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("id", business_id)
-    .eq("user_id", user.id)
-    .single();
+  const [business] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(and(eq(businesses.id, business_id), eq(businesses.user_id, session.user.id)))
+    .limit(1);
 
-  if (!business) {
-    return NextResponse.json({ error: "Business not found" }, { status: 404 });
-  }
+  if (!business) return NextResponse.json({ error: "Business not found" }, { status: 404 });
 
-  // Create the bulk run
-  const { data: run, error: runError } = await supabase
-    .from("bulk_runs")
-    .insert({
-      user_id: user.id,
+  const [run] = await db
+    .insert(bulkRuns)
+    .values({
+      user_id: session.user.id,
       business_id,
       status: "pending",
-      total_sites: sites.length,
+      total_sites: siteList.length,
       concurrency,
     })
-    .select()
-    .single();
+    .returning();
 
-  if (runError || !run) {
-    return NextResponse.json({ error: "Failed to create run" }, { status: 500 });
-  }
-
-  // Upsert sites and create result rows
-  for (const site of sites) {
+  for (const site of siteList) {
     const domain = extractDomain(site.signup_url);
 
-    // Upsert site record
-    const { data: siteRecord } = await supabase
-      .from("sites")
-      .upsert(
-        {
-          user_id: user.id,
-          name: site.name,
-          signup_url: site.signup_url,
-          base_domain: domain,
-        },
-        { onConflict: "user_id,base_domain", ignoreDuplicates: true }
-      )
-      .select()
-      .single();
+    // Upsert site
+    const existing = await db
+      .select({ id: sites.id })
+      .from(sites)
+      .where(and(eq(sites.user_id, session.user.id), eq(sites.base_domain, domain)))
+      .limit(1);
 
-    // Create result row
-    await supabase.from("bulk_run_results").insert({
+    let siteId: string | null = existing[0]?.id ?? null;
+
+    if (!siteId) {
+      const [newSite] = await db
+        .insert(sites)
+        .values({ user_id: session.user.id, name: site.name, signup_url: site.signup_url, base_domain: domain })
+        .returning({ id: sites.id });
+      siteId = newSite.id;
+    }
+
+    await db.insert(bulkRunResults).values({
       bulk_run_id: run.id,
-      site_id: siteRecord?.id ?? null,
+      site_id: siteId,
       site_name: site.name,
       signup_url: site.signup_url,
       status: "pending",
     });
   }
 
-  // Mark run as queued (worker will pick it up)
-  await supabase.from("bulk_runs").update({ status: "pending" }).eq("id", run.id);
-
   return NextResponse.json({ run_id: run.id }, { status: 201 });
 }
 
 export async function GET(_req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const runs = await db
+    .select({
+      id: bulkRuns.id,
+      user_id: bulkRuns.user_id,
+      business_id: bulkRuns.business_id,
+      status: bulkRuns.status,
+      total_sites: bulkRuns.total_sites,
+      completed_sites: bulkRuns.completed_sites,
+      successful_sites: bulkRuns.successful_sites,
+      failed_sites: bulkRuns.failed_sites,
+      skipped_sites: bulkRuns.skipped_sites,
+      concurrency: bulkRuns.concurrency,
+      started_at: bulkRuns.started_at,
+      completed_at: bulkRuns.completed_at,
+      created_at: bulkRuns.created_at,
+      business_name: businesses.name,
+    })
+    .from(bulkRuns)
+    .leftJoin(businesses, eq(bulkRuns.business_id, businesses.id))
+    .where(eq(bulkRuns.user_id, session.user.id))
+    .orderBy(desc(bulkRuns.created_at));
 
-  const { data: runs } = await supabase
-    .from("bulk_runs")
-    .select("*, businesses(name)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const data = runs.map(({ business_name, ...r }) => ({
+    ...r,
+    businesses: { name: business_name },
+  }));
 
-  return NextResponse.json({ data: runs });
+  return NextResponse.json({ data });
 }

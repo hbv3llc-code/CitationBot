@@ -1,60 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const router = useRouter();
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/` },
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
-    if (error) {
-      setError(error.message);
+    if (!res.ok) {
+      const { error: msg } = await res.json();
+      setError(msg ?? "Failed to create account");
       setLoading(false);
-    } else {
-      setSuccess(true);
+      return;
     }
-  }
 
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900">Check your email</h2>
-            <p className="text-gray-500 mt-2 text-sm">
-              We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
-            </p>
-            <Link
-              href="/login"
-              className="mt-6 inline-block text-sm text-primary font-medium hover:underline"
-            >
-              Back to sign in
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    // Auto sign-in after registration
+    const result = await signIn("credentials", { email, password, redirect: false });
+    if (result?.error) {
+      setError("Account created — please sign in");
+      router.push("/login");
+    } else {
+      router.push("/");
+      router.refresh();
+    }
   }
 
   return (

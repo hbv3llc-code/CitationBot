@@ -1,0 +1,4 @@
+# CitationBot cron jobs
+# Run monitoring checks twice daily
+0 9  * * * citationbot cd /home/citationbot/CitationBot && curl -s -X POST http://localhost:3000/api/monitoring/run >> /home/citationbot/CitationBot/logs/cron.log 2>&1
+0 17 * * * citationbot cd /home/citationbot/CitationBot && curl -s -X POST http://localhost:3000/api/monitoring/run >> /home/citationbot/CitationBot/logs/cron.log 2>&1

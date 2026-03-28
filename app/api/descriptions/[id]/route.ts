@@ -1,69 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { eq, and } from "drizzle-orm";
+import { auth } from "@/lib/auth";
+import { db, businesses, businessDescriptions } from "@/lib/db";
+
+async function verifyOwnership(descriptionId: string, userId: string) {
+  const [desc] = await db
+    .select({ business_id: businessDescriptions.business_id })
+    .from(businessDescriptions)
+    .where(eq(businessDescriptions.id, descriptionId))
+    .limit(1);
+
+  if (!desc) return null;
+
+  const [biz] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(and(eq(businesses.id, desc.business_id), eq(businesses.user_id, userId)))
+    .limit(1);
+
+  return biz ? desc : null;
+}
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify ownership via business
-  const { data: desc } = await supabase
-    .from("business_descriptions")
-    .select("business_id")
-    .eq("id", params.id)
-    .single();
-
+  const desc = await verifyOwnership(params.id, session.user.id);
   if (!desc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("id", desc.business_id)
-    .eq("user_id", user.id)
-    .single();
-
-  if (!business) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
-  const { error } = await supabase
-    .from("business_descriptions")
-    .delete()
-    .eq("id", params.id);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await db.delete(businessDescriptions).where(eq(businessDescriptions.id, params.id));
   return NextResponse.json({ success: true });
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { approved } = await req.json();
-
-  const { data: desc } = await supabase
-    .from("business_descriptions")
-    .select("business_id")
-    .eq("id", params.id)
-    .single();
-
+  const desc = await verifyOwnership(params.id, session.user.id);
   if (!desc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("id", desc.business_id)
-    .eq("user_id", user.id)
-    .single();
+  const [data] = await db
+    .update(businessDescriptions)
+    .set({ approved })
+    .where(eq(businessDescriptions.id, params.id))
+    .returning();
 
-  if (!business) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
-  const { data, error } = await supabase
-    .from("business_descriptions")
-    .update({ approved })
-    .eq("id", params.id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
 }

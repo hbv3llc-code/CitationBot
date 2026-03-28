@@ -3,39 +3,37 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import type { Proxy } from "@/types";
 
 export function ProxySettingsForm({ proxies }: { proxies: Partial<Proxy>[] }) {
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ host: "", port: "", username: "", password: "", proxy_type: "residential" as const });
+  const [form, setForm] = useState({ host: "", port: "", username: "", proxy_type: "residential" as const });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase.from("proxy_pool").insert({
-      user_id: user.id,
-      host: form.host,
-      port: parseInt(form.port),
-      username: form.username || null,
-      proxy_type: form.proxy_type,
+    await fetch("/api/settings/proxies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        host: form.host,
+        port: parseInt(form.port),
+        username: form.username || null,
+        proxy_type: form.proxy_type,
+      }),
     });
 
-    setForm({ host: "", port: "", username: "", password: "", proxy_type: "residential" });
+    setForm({ host: "", port: "", username: "", proxy_type: "residential" });
     setAdding(false);
     setLoading(false);
     router.refresh();
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("proxy_pool").delete().eq("id", id);
+    await fetch(`/api/settings/proxies/${id}`, { method: "DELETE" });
     router.refresh();
   }
 

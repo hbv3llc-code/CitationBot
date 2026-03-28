@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { auth } from "@/lib/auth";
 import { SideNav } from "@/components/layout/SideNav";
 
 export default async function DashboardLayout({
@@ -9,16 +9,15 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await auth();
 
-  if (!user) {
+  if (!session?.user) {
     redirect("/login");
   }
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <SideNav userEmail={user.email ?? ""} />
+      <SideNav userEmail={session.user.email ?? ""} />
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>

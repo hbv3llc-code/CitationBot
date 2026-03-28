@@ -4,11 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, AlertCircle, Trash2, List, Plus } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { parseCsvSites } from "@/lib/utils";
 import type { Business, SiteList } from "@/types";
-
-const supabase = createClient();
 
 export default function NewRunPage() {
   const router = useRouter();
@@ -30,13 +27,13 @@ export default function NewRunPage() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("businesses").select("*").order("name"),
+      fetch("/api/businesses").then((r) => r.json()),
       fetch("/api/site-lists").then((r) => r.json()),
-    ]).then(([{ data: biz }, listsRes]) => {
-      if (biz) setBusinesses(biz);
+    ]).then(([bizRes, listsRes]) => {
+      if (bizRes.data) setBusinesses(bizRes.data);
       if (listsRes.data) setSavedLists(listsRes.data);
     });
-  }, [supabase]);
+  }, []);
 
   const activeSites: Array<{ name: string; signup_url: string }> =
     listSource === "saved"
