@@ -6,9 +6,13 @@
 import { loadEnvConfig } from "@next/env";
 import path from "path";
 
-// Load .env file the same way Next.js does
+// Load .env BEFORE importing anything that connects to the database
 loadEnvConfig(path.resolve(__dirname, ".."));
 
-import { run } from "../lib/automation/worker";
+// Dynamic import ensures db/index.ts reads DATABASE_URL after env is loaded
+async function main() {
+  const { run } = await import("../lib/automation/worker");
+  await run();
+}
 
-run().catch(console.error);
+main().catch(console.error);
