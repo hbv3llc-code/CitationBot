@@ -11,6 +11,7 @@
 
   // Signal to the dashboard that extension is installed
   window.__CITATIONBOT_EXTENSION_INSTALLED = true;
+  window.__CITATIONBOT_EXTENSION_ID = chrome.runtime.id;
 
   let session = null;
   let overlay = null;
