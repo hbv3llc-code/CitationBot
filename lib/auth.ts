@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { db, users } from "@/lib/db";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   adapter: DrizzleAdapter(db),
   session: { strategy: "jwt" },
   pages: {
