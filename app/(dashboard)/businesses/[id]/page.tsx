@@ -61,7 +61,7 @@ export default async function BusinessDetailPage({ params }: { params: { id: str
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="font-semibold text-gray-900 mb-4">Business Profile</h2>
             <dl className="space-y-2 text-sm">
-              <div className="flex"><dt className="w-32 text-gray-400 flex-shrink-0">Phone</dt><dd className="text-gray-900">{formatPhone(biz.phone)}</dd></div>
+              <div className="flex"><dt className="w-32 text-gray-400 flex-shrink-0">Phone</dt><dd className="text-gray-900">{biz.phone ? formatPhone(biz.phone) : "—"}</dd></div>
               <div className="flex"><dt className="w-32 text-gray-400 flex-shrink-0">Email</dt><dd className="text-gray-900">{biz.email}</dd></div>
               <div className="flex"><dt className="w-32 text-gray-400 flex-shrink-0">Website</dt>
                 <dd><a href={biz.website} target="_blank" rel="noopener" className="text-primary hover:underline flex items-center gap-1">

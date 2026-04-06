@@ -8,6 +8,13 @@
       "when": 1774727567194,
       "tag": "0000_clear_baron_strucker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775499778962,
+      "tag": "0001_strong_lord_hawal",
+      "breakpoints": true
     }
   ]
 }

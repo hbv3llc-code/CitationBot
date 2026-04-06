@@ -10,14 +10,14 @@ export interface Business {
   id: string;
   user_id: string;
   name: string;
-  owner_name: string;
-  address_street: string;
+  owner_name: string | null;
+  address_street: string | null;
   address_city: string;
   address_state: string;
   address_zip: string;
   address_country: string;
-  phone: string;
-  email: string;
+  phone: string | null;
+  email: string | null;
   website: string;
   founding_year: number | null;
   service_categories: string[];

@@ -34,13 +34,13 @@ export function BusinessEditForm({
 
   const [form, setForm] = useState({
     name: business.name,
-    owner_name: business.owner_name,
-    address_street: business.address_street,
+    owner_name: business.owner_name ?? "",
+    address_street: business.address_street ?? "",
     address_city: business.address_city,
     address_state: business.address_state,
     address_zip: business.address_zip,
-    phone: business.phone,
-    email: business.email,
+    phone: business.phone ?? "",
+    email: business.email ?? "",
     website: business.website,
     founding_year: business.founding_year?.toString() ?? "",
   });

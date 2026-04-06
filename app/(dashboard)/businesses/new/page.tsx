@@ -80,8 +80,8 @@ export default function NewBusinessPage() {
                 placeholder="Acme Plumbing Co." />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name *</label>
-              <input required value={form.owner_name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("owner_name", e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
+              <input value={form.owner_name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("owner_name", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="John Smith" />
             </div>
@@ -92,8 +92,8 @@ export default function NewBusinessPage() {
                 placeholder="(555) 123-4567" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-              <input required type="email" value={form.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("email", e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" value={form.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("email", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="info@acmeplumbing.com" />
             </div>
@@ -123,22 +123,22 @@ export default function NewBusinessPage() {
                 placeholder="123 Main St" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-              <input value={form.address_city} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("address_city", e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+              <input required value={form.address_city} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("address_city", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="Springfield" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-              <select value={form.address_state} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => update("address_state", e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+              <select required value={form.address_state} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => update("address_state", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50">
                 <option value="">Select state</option>
                 {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
-              <input value={form.address_zip} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("address_zip", e.target.value)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
+              <input required value={form.address_zip} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("address_zip", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="62701" />
             </div>

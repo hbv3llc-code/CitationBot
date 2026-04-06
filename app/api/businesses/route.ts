@@ -27,8 +27,7 @@ export async function POST(req: NextRequest) {
     founding_year, service_categories = [],
   } = body;
 
-  if (!name || !owner_name || !address_street || !address_city || !address_state ||
-      !address_zip || !phone || !email || !website) {
+  if (!name || !address_city || !address_state || !address_zip || !website) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -36,8 +35,16 @@ export async function POST(req: NextRequest) {
     .insert(businesses)
     .values({
       user_id: session.user.id,
-      name, owner_name, address_street, address_city, address_state,
-      address_zip, address_country, phone, email, website,
+      name,
+      owner_name: owner_name || null,
+      address_street: address_street || null,
+      address_city,
+      address_state,
+      address_zip,
+      address_country,
+      phone: phone || null,
+      email: email || null,
+      website,
       founding_year: founding_year ?? null,
       service_categories,
     })

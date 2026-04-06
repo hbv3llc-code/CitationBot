@@ -211,14 +211,14 @@ export async function processJob(
 
     const fields: BusinessFields = {
       name: business.name,
-      owner_name: business.owner_name,
-      address_street: business.address_street,
+      owner_name: business.owner_name ?? "",
+      address_street: business.address_street ?? "",
       address_city: business.address_city,
       address_state: business.address_state,
       address_zip: business.address_zip,
       address_country: business.address_country,
-      phone: business.phone,
-      email: business.email,
+      phone: business.phone ?? "",
+      email: business.email ?? "",
       website: business.website,
       founding_year: business.founding_year?.toString() ?? "",
       description: description?.content ?? "",
@@ -268,7 +268,7 @@ export async function processJob(
         business_id: business.id,
         site_id: result.site_id!,
         profile_url: automationResult.profileUrl,
-        email_used: business.email,
+        email_used: business.email ?? "",
         encrypted_password: encryptedPassword,
         account_status: siteForVerification?.requires_email_verification
           ? "pending_verification"
