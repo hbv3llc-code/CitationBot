@@ -2,21 +2,21 @@ import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
-  const isAuthRoute =
-    req.nextUrl.pathname.startsWith("/login") ||
-    req.nextUrl.pathname.startsWith("/signup") ||
-    req.nextUrl.pathname.startsWith("/api/auth");
+  const { pathname } = req.nextUrl;
+  const isLoggedIn = !!req.auth?.user;
 
-  if (!req.auth && !isAuthRoute) {
+  const isAuthRoute =
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/api/auth");
+
+  if (!isLoggedIn && !isAuthRoute) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (
-    req.auth &&
-    (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/signup")
-  ) {
+  if (isLoggedIn && (pathname === "/login" || pathname === "/signup")) {
     const url = req.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
